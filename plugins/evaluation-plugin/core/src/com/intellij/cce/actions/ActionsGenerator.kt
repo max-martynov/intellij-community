@@ -12,6 +12,7 @@ class ActionsGenerator(val strategy: CompletionStrategy) {
     val deletionVisitor = DeleteScopesProcessor()
     if (strategy.context == CompletionContext.PREVIOUS) deletionVisitor.process(code)
 
+
     val completionVisitor =
       if (strategy.codeGolf) CodeGolfProcessor()
       else CallCompletionProcessor(code.text, strategy, code.offset)
