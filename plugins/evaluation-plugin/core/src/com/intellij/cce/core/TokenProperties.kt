@@ -123,6 +123,7 @@ enum class SymbolLocation {
 enum class TypeProperty {
   KEYWORD,
   VARIABLE,
+  VARIABLE_DECLARATION,
   LINE,
 
   // TODO: consider constructors separately
