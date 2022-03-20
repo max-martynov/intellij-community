@@ -7,6 +7,7 @@ import com.intellij.cce.core.TokenProperties
 interface CompletionInvoker {
   fun moveCaret(offset: Int)
   fun callCompletion(expectedText: String, prefix: String?): Lookup
+  fun callRename(expectedText: String, prefix: String?): Lookup
   fun finishCompletion(expectedText: String, prefix: String): Boolean
   fun printText(text: String)
   fun deleteRange(begin: Int, end: Int)
