@@ -3,6 +3,7 @@ package com.intellij.cce.processor
 import com.intellij.cce.actions.*
 import com.intellij.cce.core.CodeFragment
 import com.intellij.cce.core.CodeToken
+import com.intellij.cce.core.TypeProperty
 
 class CallCompletionProcessor(private val text: String,
                               private val strategy: CompletionStrategy,
@@ -57,13 +58,19 @@ class CallCompletionProcessor(private val text: String,
       var currentPrefix = ""
       if (prefixCreator.completePrevious) {
         for (symbol in prefix) {
-          addAction(CallCompletion(currentPrefix, token.text, token.properties))
+          if (token.properties.tokenType == TypeProperty.VARIABLE_DECLARATION)
+            addAction(CallRename(currentPrefix, token.text, token.properties))
+          else
+            addAction(CallCompletion(currentPrefix, token.text, token.properties))
           addAction(PrintText(symbol.toString(), false))
           currentPrefix += symbol
         }
       }
       else if (prefix.isNotEmpty()) addAction(PrintText(prefix, false))
-      addAction(CallCompletion(prefix, token.text, token.properties))
+      if (token.properties.tokenType == TypeProperty.VARIABLE_DECLARATION)
+        addAction(CallRename(currentPrefix, token.text, token.properties))
+      else
+        addAction(CallCompletion(prefix, token.text, token.properties))
       addAction(FinishSession())
 
       if (prefix.isNotEmpty())
