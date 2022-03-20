@@ -89,20 +89,17 @@ class Interpreter(private val invoker: CompletionInvoker,
             invoker.deleteRange(action.begin, action.end)
         }
         is CallRename -> {
-          val lookup = Lookup.fromExpectedText(
-            expectedText = action.expectedText,
-            text = action.prefix,
-            suggestions = listOf(
-              Suggestion("a", "a", SuggestionSource.STANDARD),
-              Suggestion("b", "b", SuggestionSource.STANDARD),
-              Suggestion("c", "c", SuggestionSource.STANDARD),
-              Suggestion("d", "d", SuggestionSource.STANDARD),
-              Suggestion("e", "e", SuggestionSource.STANDARD)
-            ),
-            latency = 100
-          )
-          if (session != null)
+          isFinished = false
+          if (shouldCompleteToken) {
+            val lookup = invoker.callRename(action.expectedText, action.prefix)
+            if (session == null) {
+              val sessionUuid = lookup.features?.common?.context?.get(CCE_SESSION_UID_FEATURE_NAME)
+                                ?: UUID.randomUUID().toString()
+              val content = if (saveContent) invoker.getText() else null
+              session = Session(position, action.expectedText, content, action.nodeProperties, sessionUuid)
+            }
             session.addLookup(lookup)
+          }
         }
       }
       if (isCanceled) break
