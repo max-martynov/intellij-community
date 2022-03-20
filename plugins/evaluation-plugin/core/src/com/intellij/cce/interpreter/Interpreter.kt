@@ -1,7 +1,10 @@
 package com.intellij.cce.interpreter
 
 import com.intellij.cce.actions.*
+import com.intellij.cce.core.Lookup
 import com.intellij.cce.core.Session
+import com.intellij.cce.core.Suggestion
+import com.intellij.cce.core.SuggestionSource
 import com.intellij.cce.util.FileTextUtil.computeChecksum
 import com.intellij.cce.util.FileTextUtil.getDiff
 import java.nio.file.Paths
@@ -84,6 +87,22 @@ class Interpreter(private val invoker: CompletionInvoker,
         is DeleteRange -> {
           if (!action.completable || !isFinished)
             invoker.deleteRange(action.begin, action.end)
+        }
+        is CallRename -> {
+          val lookup = Lookup.fromExpectedText(
+            expectedText = action.expectedText,
+            text = action.prefix,
+            suggestions = listOf(
+              Suggestion("a", "a", SuggestionSource.STANDARD),
+              Suggestion("b", "b", SuggestionSource.STANDARD),
+              Suggestion("c", "c", SuggestionSource.STANDARD),
+              Suggestion("d", "d", SuggestionSource.STANDARD),
+              Suggestion("e", "e", SuggestionSource.STANDARD)
+            ),
+            latency = 100
+          )
+          if (session != null)
+            session.addLookup(lookup)
         }
       }
       if (isCanceled) break

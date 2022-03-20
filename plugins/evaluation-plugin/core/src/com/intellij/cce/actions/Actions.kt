@@ -6,7 +6,7 @@ import java.lang.reflect.Type
 
 sealed class Action(val type: ActionType) {
   enum class ActionType {
-    MOVE_CARET, CALL_COMPLETION, FINISH_SESSION, PRINT_TEXT, DELETE_RANGE, EMULATE_USER_SESSION, CODE_GOLF
+    MOVE_CARET, CALL_COMPLETION, FINISH_SESSION, PRINT_TEXT, DELETE_RANGE, EMULATE_USER_SESSION, CODE_GOLF, CALL_RENAME
   }
 
   object JsonAdapter : JsonDeserializer<Action>, JsonSerializer<Action> {
@@ -19,6 +19,7 @@ sealed class Action(val type: ActionType) {
         ActionType.DELETE_RANGE -> context.deserialize(json, DeleteRange::class.java)
         ActionType.EMULATE_USER_SESSION -> context.deserialize(json, EmulateUserSession::class.java)
         ActionType.CODE_GOLF -> context.deserialize(json, CodeGolfSession::class.java)
+        ActionType.CALL_RENAME -> context.deserialize(json, CallRename::class.java)
       }
     }
 
@@ -33,6 +34,9 @@ data class FileActions(val path: String, val checksum: String, val sessionsCount
 data class MoveCaret(val offset: Int) : Action(ActionType.MOVE_CARET)
 data class CallCompletion(val prefix: String, val expectedText: String, val nodeProperties: TokenProperties) : Action(
   ActionType.CALL_COMPLETION)
+data class CallRename(val prefix: String, val expectedText: String, val nodeProperties: TokenProperties) : Action(
+  ActionType.CALL_RENAME)
+
 
 class FinishSession : Action(ActionType.FINISH_SESSION)
 data class PrintText(val text: String, val completable: Boolean = false) : Action(ActionType.PRINT_TEXT)
