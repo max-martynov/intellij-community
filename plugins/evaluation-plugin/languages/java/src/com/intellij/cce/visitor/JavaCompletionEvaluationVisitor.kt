@@ -50,6 +50,13 @@ class JavaCompletionEvaluationVisitor : CompletionEvaluationVisitor, JavaRecursi
   override fun visitImportStatement(statement: PsiImportStatement?) = Unit
   override fun visitImportStaticStatement(statement: PsiImportStaticStatement?) = Unit
   override fun visitComment(comment: PsiComment) = Unit
+  override fun visitVariable(variable: PsiVariable) {
+    variable.name?.let { variableName ->
+      val token = CodeToken(variableName, variable.textOffset, variableName.length, variableDeclarationProperties())
+      codeFragment?.addChild(token)
+    }
+    super.visitVariable(variable)
+  }
 
   private fun createTokenProperties(reference: PsiJavaCodeReferenceElement): TokenProperties {
     return when (val def = reference.resolve()) {
@@ -57,7 +64,7 @@ class JavaCompletionEvaluationVisitor : CompletionEvaluationVisitor, JavaRecursi
              is PsiClass -> typeReferenceProperties(def)
              is PsiClassObjectAccessExpression ->
                PsiTypesUtil.getPsiClass(def.operand.type)?.let { typeReferenceProperties(it) }
-//            is PsiTypeCastExpression ->
+             //            is PsiTypeCastExpression ->
              is PsiVariable -> variableProperties()
              is PsiMethod -> methodProperties(def)
              else -> null
@@ -84,6 +91,10 @@ class JavaCompletionEvaluationVisitor : CompletionEvaluationVisitor, JavaRecursi
 
   private fun methodProperties(method: PsiMethod?): TokenProperties {
     return classMemberProperties(TypeProperty.METHOD_CALL, method)
+  }
+
+  private fun variableDeclarationProperties(): TokenProperties {
+    return properties(TypeProperty.VARIABLE_DECLARATION, SymbolLocation.PROJECT) {}
   }
 
   private fun constructorProperties(expression: PsiNewExpression): TokenProperties {
