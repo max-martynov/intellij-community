@@ -22,6 +22,12 @@ class DelegationCompletionInvoker(private val invoker: CompletionInvoker, projec
     }
   }
 
+  override fun callRename(expectedText: String, prefix: String?): Lookup {
+    return readActionWaitingForSize {
+      invoker.callRename(expectedText, prefix)
+    }
+  }
+
   override fun finishCompletion(expectedText: String, prefix: String) = readAction {
     invoker.finishCompletion(expectedText, prefix)
   }

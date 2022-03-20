@@ -86,6 +86,35 @@ class CompletionInvokerImpl(private val project: Project,
     return com.intellij.cce.core.Lookup.fromExpectedText(expectedText, lookup.prefix(), suggestions, latency, resultFeatures, isNew)
   }
 
+  override fun callRename(expectedText: String, prefix: String?): com.intellij.cce.core.Lookup {
+    LOG.info("Call rename. Type: $completionType. ${positionToString(editor!!.caretModel.offset)}")
+    //        assert(!dumbService.isDumb) { "Calling completion during indexing." }
+
+    val start = System.currentTimeMillis()
+    val isNew = LookupManager.getActiveLookup(editor) == null
+    val activeLookup = LookupManager.getActiveLookup(editor) ?: invokeCompletion(expectedText, prefix)
+    val latency = System.currentTimeMillis() - start
+    if (activeLookup == null) {
+      return com.intellij.cce.core.Lookup.fromExpectedText(expectedText, prefix ?: "", emptyList(), latency, isNew = isNew)
+    }
+
+    val lookup = activeLookup as LookupImpl
+    val features = MLCompletionFeaturesUtil.getCommonFeatures(lookup)
+    val resultFeatures = Features(
+      CommonFeatures(features.context, features.user, features.session),
+      lookup.items.map { MLCompletionFeaturesUtil.getElementFeatures(lookup, it).features }
+    )
+    val suggestions = listOf(
+      Suggestion("a", "a", SuggestionSource.STANDARD),
+      Suggestion("b", "b", SuggestionSource.STANDARD),
+      Suggestion("c", "c", SuggestionSource.STANDARD),
+      Suggestion("d", "d", SuggestionSource.STANDARD),
+      Suggestion("e", "e", SuggestionSource.STANDARD)
+    )
+
+    return com.intellij.cce.core.Lookup.fromExpectedText(expectedText, lookup.prefix(), suggestions, latency, resultFeatures, isNew)
+  }
+
   override fun finishCompletion(expectedText: String, prefix: String): Boolean {
     LOG.info("Finish completion. Expected text: $expectedText")
     if (completionType == CompletionType.SMART) return false
