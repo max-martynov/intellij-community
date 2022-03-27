@@ -7,7 +7,7 @@ import com.intellij.psi.util.PsiTypesUtil
 import com.intellij.cce.core.*
 import com.intellij.cce.visitor.exceptions.PsiConverterException
 
-class JavaCompletionEvaluationVisitor : CompletionEvaluationVisitor, JavaRecursiveElementVisitor() {
+class JavaEvaluationVisitor : CompletionEvaluationVisitor, JavaRecursiveElementVisitor() {
   private var codeFragment: CodeFragment? = null
 
   override val language: Language = Language.JAVA
@@ -46,10 +46,6 @@ class JavaCompletionEvaluationVisitor : CompletionEvaluationVisitor, JavaRecursi
     }
   }
 
-  override fun visitPackageStatement(statement: PsiPackageStatement?) = Unit
-  override fun visitImportStatement(statement: PsiImportStatement?) = Unit
-  override fun visitImportStaticStatement(statement: PsiImportStaticStatement?) = Unit
-  override fun visitComment(comment: PsiComment) = Unit
   override fun visitVariable(variable: PsiVariable) {
     variable.name?.let { variableName ->
       val token = CodeToken(variableName, variable.textOffset, variableName.length, variableDeclarationProperties())
@@ -57,6 +53,11 @@ class JavaCompletionEvaluationVisitor : CompletionEvaluationVisitor, JavaRecursi
     }
     super.visitVariable(variable)
   }
+
+  override fun visitPackageStatement(statement: PsiPackageStatement?) = Unit
+  override fun visitImportStatement(statement: PsiImportStatement?) = Unit
+  override fun visitImportStaticStatement(statement: PsiImportStaticStatement?) = Unit
+  override fun visitComment(comment: PsiComment) = Unit
 
   private fun createTokenProperties(reference: PsiJavaCodeReferenceElement): TokenProperties {
     return when (val def = reference.resolve()) {
