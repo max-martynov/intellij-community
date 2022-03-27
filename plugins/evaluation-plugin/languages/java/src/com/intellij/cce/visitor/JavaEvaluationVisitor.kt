@@ -48,7 +48,7 @@ class JavaEvaluationVisitor : CompletionEvaluationVisitor, JavaRecursiveElementV
 
   override fun visitVariable(variable: PsiVariable) {
     variable.name?.let { variableName ->
-      val token = CodeToken(variableName, variable.textOffset, variableName.length, variableDeclarationProperties())
+      val token = CodeToken(variableName, variable.textOffset, variableName.length, variableDeclarationProperties(), variable)
       codeFragment?.addChild(token)
     }
     super.visitVariable(variable)
