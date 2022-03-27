@@ -31,6 +31,7 @@ import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.testFramework.TestModeFlags
 import java.io.File
@@ -92,14 +93,19 @@ class CompletionInvokerImpl(private val project: Project,
     return com.intellij.cce.core.Lookup.fromExpectedText(expectedText, lookup.prefix(), suggestions, latency, resultFeatures, isNew)
   }
 
-  override fun callRename(expectedName: String, element: PsiElement): com.intellij.cce.core.Lookup {
+  override fun callRename(expectedName: String, offset: Int): com.intellij.cce.core.Lookup {
     LOG.info("Call rename. Type: $completionType. ${positionToString(editor!!.caretModel.offset)}")
     //        assert(!dumbService.isDumb) { "Calling completion during indexing." }
 
     val start = System.currentTimeMillis()
 
-    val suggestionsAsStrings = emptySet<String>()
-    nameSuggestionProvider?.getSuggestedNames(element, null, suggestionsAsStrings)
+    val suggestionsAsStrings = mutableSetOf<String>()
+
+    if (editor != null && editor!!.project != null) {
+      val element = PsiDocumentManager.getInstance(editor!!.project!!).getPsiFile(editor!!.document)?.findElementAt(offset)
+      if (element != null)
+        nameSuggestionProvider?.getSuggestedNames(element, null, suggestionsAsStrings)
+    }
 
     val latency = System.currentTimeMillis() - start
 

@@ -44,6 +44,34 @@ class CallCompletionProcessor(private val text: String,
   }
 
   private fun processToken(token: CodeToken) {
+    when(token.properties.tokenType) {
+      TypeProperty.VARIABLE_DECLARATION -> processVariableDeclaration(token)
+      else -> processCompletion(token)
+    }
+  }
+
+  private fun processVariableDeclaration(token: CodeToken) {
+    if (!checkFilters(token)) return
+
+    when (strategy.context) {
+      CompletionContext.ALL -> prepareAllContext(token)
+      CompletionContext.PREVIOUS -> preparePreviousContext(token)
+    }
+
+    if (strategy.emulateUser) {
+      addAction(EmulateUserSession(token.text, token.properties))
+    } else {
+      val prefix = token.text[0].toString()
+      addAction(PrintText(prefix, false))
+      addAction(CallRename(token.text, token.offset, token.properties))
+      addAction(FinishSession())
+      if (prefix.isNotEmpty())
+        addAction(DeleteRange(token.offset, token.offset + prefix.length, true))
+      addAction(PrintText(token.text, true))
+    }
+  }
+
+  private fun processCompletion(token: CodeToken) {
     if (!checkFilters(token)) return
 
     when (strategy.context) {
@@ -58,19 +86,13 @@ class CallCompletionProcessor(private val text: String,
       var currentPrefix = ""
       if (prefixCreator.completePrevious) {
         for (symbol in prefix) {
-          if (token.properties.tokenType == TypeProperty.VARIABLE_DECLARATION)
-            addAction(CallRename(currentPrefix, token.text, token.properties))
-          else
-            addAction(CallCompletion(currentPrefix, token.text, token.properties))
+          addAction(CallCompletion(currentPrefix, token.text, token.properties))
           addAction(PrintText(symbol.toString(), false))
           currentPrefix += symbol
         }
       }
       else if (prefix.isNotEmpty()) addAction(PrintText(prefix, false))
-      if (token.properties.tokenType == TypeProperty.VARIABLE_DECLARATION)
-        addAction(CallRename(currentPrefix, token.text, token.properties))
-      else
-        addAction(CallCompletion(prefix, token.text, token.properties))
+      addAction(CallCompletion(prefix, token.text, token.properties))
       addAction(FinishSession())
 
       if (prefix.isNotEmpty())
@@ -78,6 +100,8 @@ class CallCompletionProcessor(private val text: String,
       addAction(PrintText(token.text, true))
     }
   }
+
+
 
   private fun prepareAllContext(token: CodeToken) {
     addAction(DeleteRange(token.offset, token.offset + token.length))

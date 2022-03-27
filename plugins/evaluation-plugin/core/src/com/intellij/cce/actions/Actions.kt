@@ -34,7 +34,7 @@ data class FileActions(val path: String, val checksum: String, val sessionsCount
 data class MoveCaret(val offset: Int) : Action(ActionType.MOVE_CARET)
 data class CallCompletion(val prefix: String, val expectedText: String, val nodeProperties: TokenProperties) : Action(
   ActionType.CALL_COMPLETION)
-data class CallRename(val prefix: String, val expectedText: String, val nodeProperties: TokenProperties) : Action(
+data class CallRename(val name: String, val offset: Int, val nodeProperties: TokenProperties) : Action(
   ActionType.CALL_RENAME)
 
 

@@ -8,7 +8,7 @@ import com.intellij.psi.PsiElement
 interface CompletionInvoker {
   fun moveCaret(offset: Int)
   fun callCompletion(expectedText: String, prefix: String?): Lookup
-  fun callRename(expectedName: String, element: PsiElement): Lookup
+  fun callRename(expectedName: String, offset: Int): Lookup
   fun finishCompletion(expectedText: String, prefix: String): Boolean
   fun printText(text: String)
   fun deleteRange(begin: Int, end: Int)

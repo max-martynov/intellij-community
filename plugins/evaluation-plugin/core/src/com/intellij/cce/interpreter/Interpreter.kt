@@ -1,10 +1,7 @@
 package com.intellij.cce.interpreter
 
 import com.intellij.cce.actions.*
-import com.intellij.cce.core.Lookup
-import com.intellij.cce.core.Session
-import com.intellij.cce.core.Suggestion
-import com.intellij.cce.core.SuggestionSource
+import com.intellij.cce.core.*
 import com.intellij.cce.util.FileTextUtil.computeChecksum
 import com.intellij.cce.util.FileTextUtil.getDiff
 import java.nio.file.Paths
@@ -47,12 +44,8 @@ class Interpreter(private val invoker: CompletionInvoker,
           isFinished = false
           if (shouldCompleteToken) {
             val lookup = invoker.callCompletion(action.expectedText, action.prefix)
-            if (session == null) {
-              val sessionUuid = lookup.features?.common?.context?.get(CCE_SESSION_UID_FEATURE_NAME)
-                                ?: UUID.randomUUID().toString()
-              val content = if (saveContent) invoker.getText() else null
-              session = Session(position, action.expectedText, content, action.nodeProperties, sessionUuid)
-            }
+            if (session == null)
+              session = createSession(position,  action.expectedText, action.nodeProperties, lookup)
             session.addLookup(lookup)
           }
         }
@@ -91,13 +84,9 @@ class Interpreter(private val invoker: CompletionInvoker,
         is CallRename -> {
           isFinished = false
           if (shouldCompleteToken) {
-            val lookup = invoker.callRename(action.expectedText, action.prefix)
-            if (session == null) {
-              val sessionUuid = lookup.features?.common?.context?.get(CCE_SESSION_UID_FEATURE_NAME)
-                                ?: UUID.randomUUID().toString()
-              val content = if (saveContent) invoker.getText() else null
-              session = Session(position, action.expectedText, content, action.nodeProperties, sessionUuid)
-            }
+            val lookup = invoker.callRename(action.name, action.offset)
+            if (session == null)
+              session = createSession(position, action.name, action.nodeProperties, lookup)
             session.addLookup(lookup)
           }
         }
@@ -116,5 +105,12 @@ class Interpreter(private val invoker: CompletionInvoker,
     if (needToClose) invoker.closeFile(filePath)
     handler.onFileProcessed(fileActions.path)
     return sessions
+  }
+
+  private fun createSession(position: Int, expectedText: String, nodeProperties: TokenProperties, lookup: Lookup): Session {
+    val sessionUuid = lookup.features?.common?.context?.get(CCE_SESSION_UID_FEATURE_NAME)
+                      ?: UUID.randomUUID().toString()
+    val content = if (saveContent) invoker.getText() else null
+    return Session(position, expectedText, content, nodeProperties, sessionUuid)
   }
 }

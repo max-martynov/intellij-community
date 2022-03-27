@@ -23,9 +23,9 @@ class DelegationCompletionInvoker(private val invoker: CompletionInvoker, projec
     }
   }
 
-  override fun callRename(expectedName: String, element: PsiElement): Lookup {
+  override fun callRename(expectedName: String, offset: Int): Lookup {
     return readActionWaitingForSize {
-      invoker.callRename(expectedName, element)
+      invoker.callRename(expectedName, offset)
     }
   }
 
