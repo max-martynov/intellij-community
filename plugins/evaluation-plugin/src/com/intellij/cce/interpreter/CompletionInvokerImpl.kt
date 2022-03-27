@@ -31,8 +31,13 @@ import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.psi.PsiElement
 import com.intellij.testFramework.TestModeFlags
 import java.io.File
+import com.intellij.psi.PsiVariable
+import com.intellij.refactoring.rename.JavaNameSuggestionProvider
+import com.intellij.refactoring.rename.NameSuggestionProvider
+import com.intellij.refactoring.rename.inplace.MyLookupExpression
 
 class CompletionInvokerImpl(private val project: Project,
                             private val language: Language,
@@ -56,7 +61,8 @@ class CompletionInvokerImpl(private val project: Project,
   private var spaceStrippingEnabled: Boolean = true
   private val userEmulator: UserEmulator = UserEmulator.create(userEmulationSettings)
   private val dumbService = DumbService.getInstance(project)
-
+  private val nameSuggestionProvider = getNameSuggestionProvider()
+  
   override fun moveCaret(offset: Int) {
     LOG.info("Move caret. ${positionToString(offset)}")
     editor!!.caretModel.moveToOffset(offset)
@@ -86,33 +92,23 @@ class CompletionInvokerImpl(private val project: Project,
     return com.intellij.cce.core.Lookup.fromExpectedText(expectedText, lookup.prefix(), suggestions, latency, resultFeatures, isNew)
   }
 
-  override fun callRename(expectedText: String, prefix: String?): com.intellij.cce.core.Lookup {
+  override fun callRename(expectedName: String, element: PsiElement): com.intellij.cce.core.Lookup {
     LOG.info("Call rename. Type: $completionType. ${positionToString(editor!!.caretModel.offset)}")
     //        assert(!dumbService.isDumb) { "Calling completion during indexing." }
 
     val start = System.currentTimeMillis()
-    val isNew = LookupManager.getActiveLookup(editor) == null
-    val activeLookup = LookupManager.getActiveLookup(editor) ?: invokeCompletion(expectedText, prefix)
+
+    val suggestionsAsStrings = emptySet<String>()
+    nameSuggestionProvider?.getSuggestedNames(element, null, suggestionsAsStrings)
+
     val latency = System.currentTimeMillis() - start
-    if (activeLookup == null) {
-      return com.intellij.cce.core.Lookup.fromExpectedText(expectedText, prefix ?: "", emptyList(), latency, isNew = isNew)
-    }
 
-    val lookup = activeLookup as LookupImpl
-    val features = MLCompletionFeaturesUtil.getCommonFeatures(lookup)
-    val resultFeatures = Features(
-      CommonFeatures(features.context, features.user, features.session),
-      lookup.items.map { MLCompletionFeaturesUtil.getElementFeatures(lookup, it).features }
+    return com.intellij.cce.core.Lookup.fromExpectedText(
+      expectedName,
+      "",
+      suggestionsAsStrings.toList().map { Suggestion(it, it, SuggestionSource.INTELLIJ) },
+      latency
     )
-    val suggestions = listOf(
-      Suggestion("a", "a", SuggestionSource.STANDARD),
-      Suggestion("b", "b", SuggestionSource.STANDARD),
-      Suggestion("c", "c", SuggestionSource.STANDARD),
-      Suggestion("d", "d", SuggestionSource.STANDARD),
-      Suggestion("e", "e", SuggestionSource.STANDARD)
-    )
-
-    return com.intellij.cce.core.Lookup.fromExpectedText(expectedText, lookup.prefix(), suggestions, latency, resultFeatures, isNew)
   }
 
   override fun finishCompletion(expectedText: String, prefix: String): Boolean {
@@ -310,5 +306,11 @@ class CompletionInvokerImpl(private val project: Project,
       else -> SuggestionSource.STANDARD
     }
   }
+  
+  private fun getNameSuggestionProvider(): NameSuggestionProvider? =
+    when(language) {
+      Language.JAVA -> JavaNameSuggestionProvider()
+      else -> null
+    }
 }
 
