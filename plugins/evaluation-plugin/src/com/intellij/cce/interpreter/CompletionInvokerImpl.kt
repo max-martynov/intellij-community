@@ -37,6 +37,7 @@ import com.intellij.psi.PsiNamedElement
 import com.intellij.testFramework.TestModeFlags
 import java.io.File
 import com.intellij.refactoring.rename.NameSuggestionProvider
+import com.intellij.refactoring.rename.RenamePsiElementProcessor
 import com.intellij.refactoring.rename.RenamePsiElementProcessorBase
 import com.intellij.refactoring.rename.inplace.MyLookupExpression
 import com.intellij.refactoring.rename.inplace.VariableInplaceRenameHandler
@@ -107,7 +108,7 @@ class CompletionInvokerImpl(private val project: Project,
     if (myEditor != null) {
       val element = PsiDocumentManager.getInstance(project).getPsiFile(myEditor.document)?.findElementAt(offset)!!
 
-      val c = RenamePsiElementProcessorBase.forPsiElement(element)
+      val c = RenamePsiElementProcessor.forPsiElement(element)
 
       val d = c.createDialog(project, element, element, myEditor)
 

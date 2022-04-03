@@ -61,12 +61,11 @@ class CallCompletionProcessor(private val text: String,
     if (strategy.emulateUser) {
       addAction(EmulateUserSession(token.text, token.properties))
     } else {
-      val prefix = token.text[0].toString()
-      addAction(PrintText(prefix, false))
+      val defaultName = "variableToRename"
+      addAction(PrintText(defaultName, false))
       addAction(CallRename(token.text, token.offset, token.properties))
       addAction(FinishSession())
-      if (prefix.isNotEmpty())
-        addAction(DeleteRange(token.offset, token.offset + prefix.length, true))
+      addAction(DeleteRange(token.offset, token.offset + defaultName.length, true))
       addAction(PrintText(token.text, true))
     }
   }
