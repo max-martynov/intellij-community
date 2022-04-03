@@ -3,7 +3,6 @@ package com.intellij.cce.interpreter
 import com.intellij.cce.core.Lookup
 import com.intellij.cce.core.Session
 import com.intellij.cce.core.TokenProperties
-import com.intellij.psi.PsiElement
 
 interface CompletionInvoker {
   fun moveCaret(offset: Int)

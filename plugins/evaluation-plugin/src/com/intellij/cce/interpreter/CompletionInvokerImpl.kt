@@ -33,12 +33,13 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiNamedElement
 import com.intellij.testFramework.TestModeFlags
 import java.io.File
-import com.intellij.psi.PsiVariable
-import com.intellij.refactoring.rename.JavaNameSuggestionProvider
 import com.intellij.refactoring.rename.NameSuggestionProvider
+import com.intellij.refactoring.rename.RenamePsiElementProcessorBase
 import com.intellij.refactoring.rename.inplace.MyLookupExpression
+import com.intellij.refactoring.rename.inplace.VariableInplaceRenameHandler
 
 class CompletionInvokerImpl(private val project: Project,
                             private val language: Language,
@@ -62,7 +63,7 @@ class CompletionInvokerImpl(private val project: Project,
   private var spaceStrippingEnabled: Boolean = true
   private val userEmulator: UserEmulator = UserEmulator.create(userEmulationSettings)
   private val dumbService = DumbService.getInstance(project)
-  private val nameSuggestionProvider = getNameSuggestionProvider()
+
   
   override fun moveCaret(offset: Int) {
     LOG.info("Move caret. ${positionToString(offset)}")
@@ -99,12 +100,19 @@ class CompletionInvokerImpl(private val project: Project,
 
     val start = System.currentTimeMillis()
 
-    val suggestionsAsStrings = mutableSetOf<String>()
+    val myEditor = editor
 
-    if (editor != null && editor!!.project != null) {
-      val element = PsiDocumentManager.getInstance(editor!!.project!!).getPsiFile(editor!!.document)?.findElementAt(offset)
-      if (element != null)
-        nameSuggestionProvider?.getSuggestedNames(element, null, suggestionsAsStrings)
+    var suggestionsAsStrings: Array<String> = emptyArray()
+
+    if (myEditor != null) {
+      val element = PsiDocumentManager.getInstance(project).getPsiFile(myEditor.document)?.findElementAt(offset)!!
+
+      val c = RenamePsiElementProcessorBase.forPsiElement(element)
+
+      val d = c.createDialog(project, element, element, myEditor)
+
+      suggestionsAsStrings = d.suggestedNames
+
     }
 
     val latency = System.currentTimeMillis() - start
@@ -312,11 +320,6 @@ class CompletionInvokerImpl(private val project: Project,
       else -> SuggestionSource.STANDARD
     }
   }
-  
-  private fun getNameSuggestionProvider(): NameSuggestionProvider? =
-    when(language) {
-      Language.JAVA -> JavaNameSuggestionProvider()
-      else -> null
-    }
+
 }
 
