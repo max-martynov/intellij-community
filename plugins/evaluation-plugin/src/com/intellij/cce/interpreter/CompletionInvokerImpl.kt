@@ -14,12 +14,18 @@ import com.intellij.codeInsight.lookup.Lookup
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.completion.ml.actions.MLCompletionFeaturesUtil
 import com.intellij.completion.ml.util.prefix
+import com.intellij.ide.DataManager
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.command.impl.UndoManagerImpl
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorModificationUtil
 import com.intellij.openapi.editor.ScrollType
+import com.intellij.openapi.editor.impl.EditorComponentImpl
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.impl.TrailingSpacesStripper
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -27,20 +33,27 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.psi.PsiDocumentManager
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiNamedElement
+import com.intellij.psi.PsiFileFactory
+import com.intellij.refactoring.InplaceRefactoringContinuation
+import com.intellij.refactoring.RefactoringBundle
+import com.intellij.refactoring.actions.RenameElementAction
+import com.intellij.refactoring.actions.RenamerRenderer
+import com.intellij.refactoring.rename.Renamer
+import com.intellij.refactoring.rename.RenamerFactory
+import com.intellij.refactoring.rename.inplace.InplaceRefactoring
+import com.intellij.refactoring.util.CommonRefactoringUtil
 import com.intellij.testFramework.TestModeFlags
+import com.intellij.util.SlowOperations
 import java.io.File
-import com.intellij.refactoring.rename.NameSuggestionProvider
-import com.intellij.refactoring.rename.RenamePsiElementProcessor
-import com.intellij.refactoring.rename.RenamePsiElementProcessorBase
-import com.intellij.refactoring.rename.inplace.MyLookupExpression
-import com.intellij.refactoring.rename.inplace.VariableInplaceRenameHandler
+import java.util.stream.Collectors
+import java.util.stream.Stream
+
 
 class CompletionInvokerImpl(private val project: Project,
                             private val language: Language,
@@ -78,7 +91,7 @@ class CompletionInvokerImpl(private val project: Project,
 
     val start = System.currentTimeMillis()
     val isNew = LookupManager.getActiveLookup(editor) == null
-    val activeLookup = LookupManager.getActiveLookup(editor) ?: invokeCompletion(expectedText, prefix)
+    val activeLookup = invokeCompletion(expectedText, prefix)
     val latency = System.currentTimeMillis() - start
     if (activeLookup == null) {
       return com.intellij.cce.core.Lookup.fromExpectedText(expectedText, prefix ?: "", emptyList(), latency, isNew = isNew)
@@ -103,17 +116,28 @@ class CompletionInvokerImpl(private val project: Project,
 
     val myEditor = editor
 
-    var suggestionsAsStrings: Array<String> = emptyArray()
-
     if (myEditor != null) {
-      val element = PsiDocumentManager.getInstance(project).getPsiFile(myEditor.document)?.findElementAt(offset)!!
 
-      val c = RenamePsiElementProcessor.forPsiElement(element)
+      val dataContext = DataManager.getInstance().getDataContext(myEditor.component)
 
-      val d = c.createDialog(project, element, element, myEditor)
+      val anActionEvent = AnActionEvent(null, dataContext, "", Presentation(), ActionManager.getInstance(), 0)
 
-      suggestionsAsStrings = d.suggestedNames
+      RenameElementAction().actionPerformed(anActionEvent)
+    }
 
+    val activeLookup = LookupManager.getActiveLookup(myEditor)
+
+    var suggestions = listOf<Suggestion>()
+
+    if (activeLookup != null) {
+
+      val lookup = activeLookup as LookupImpl
+      val features = MLCompletionFeaturesUtil.getCommonFeatures(lookup)
+      val resultFeatures = Features(
+        CommonFeatures(features.context, features.user, features.session),
+        lookup.items.map { MLCompletionFeaturesUtil.getElementFeatures(lookup, it).features }
+      )
+      suggestions = lookup.items.map { it.asSuggestion() }
     }
 
     val latency = System.currentTimeMillis() - start
@@ -121,7 +145,7 @@ class CompletionInvokerImpl(private val project: Project,
     return com.intellij.cce.core.Lookup.fromExpectedText(
       expectedName,
       "",
-      suggestionsAsStrings.toList().map { Suggestion(it, it, SuggestionSource.INTELLIJ) },
+      suggestions,
       latency
     )
   }
@@ -131,6 +155,12 @@ class CompletionInvokerImpl(private val project: Project,
     if (completionType == CompletionType.SMART) return false
     val lookup = LookupManager.getActiveLookup(editor) as? LookupImpl ?: return false
     val expectedItemIndex = lookup.items.indexOfFirst { it.lookupString == expectedText }
+    try {
+      val ir = InplaceRefactoring.getActiveInplaceRenamer(editor)
+      ir.finish(true)
+    } catch(_: Exception) {
+
+    }
     try {
       return if (expectedItemIndex != -1) lookup.finish(expectedItemIndex, expectedText.length - prefix.length) else false
     }

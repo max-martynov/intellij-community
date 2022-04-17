@@ -8,6 +8,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import com.intellij.util.TimeoutUtil.sleep
 
 class DelegationCompletionInvoker(private val invoker: CompletionInvoker, project: Project) : CompletionInvoker {
   private val applicationListenersRestriction = ListSizeRestriction.applicationListeners()
@@ -25,7 +26,8 @@ class DelegationCompletionInvoker(private val invoker: CompletionInvoker, projec
 
   override fun callRename(expectedName: String, offset: Int): Lookup {
     return readActionWaitingForSize {
-      invoker.callRename(expectedName, offset)
+      val lk = invoker.callRename(expectedName, offset)
+      lk
     }
   }
 
