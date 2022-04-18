@@ -51,7 +51,7 @@ class CallCompletionProcessor(private val text: String,
   }
 
   private fun processVariableDeclaration(token: CodeToken) {
-    if (!checkFilters(token)) return
+    if ( !checkFilters(token)) return
 
     when (strategy.context) {
       CompletionContext.ALL -> prepareAllContext(token)
@@ -71,33 +71,33 @@ class CallCompletionProcessor(private val text: String,
   }
 
   private fun processCompletion(token: CodeToken) {
-    //if (!checkFilters(token)) return
-    //
-    //when (strategy.context) {
-    //  CompletionContext.ALL -> prepareAllContext(token)
-    //  CompletionContext.PREVIOUS -> preparePreviousContext(token)
-    //}
-    //
-    //if (strategy.emulateUser) {
-    //  addAction(EmulateUserSession(token.text, token.properties))
-    //} else {
-    //  val prefix = prefixCreator.getPrefix(token.text)
-    //  var currentPrefix = ""
-    //  if (prefixCreator.completePrevious) {
-    //    for (symbol in prefix) {
-    //      addAction(CallCompletion(currentPrefix, token.text, token.properties))
-    //      addAction(PrintText(symbol.toString(), false))
-    //      currentPrefix += symbol
-    //    }
-    //  }
-    //  else if (prefix.isNotEmpty()) addAction(PrintText(prefix, false))
-    //  addAction(CallCompletion(prefix, token.text, token.properties))
-    //  addAction(FinishSession())
-    //
-    //  if (prefix.isNotEmpty())
-    //    addAction(DeleteRange(token.offset, token.offset + prefix.length, true))
-    //  addAction(PrintText(token.text, true))
-    //}
+    if (!checkFilters(token)) return
+
+    when (strategy.context) {
+      CompletionContext.ALL -> prepareAllContext(token)
+      CompletionContext.PREVIOUS -> preparePreviousContext(token)
+    }
+
+    if (strategy.emulateUser) {
+      addAction(EmulateUserSession(token.text, token.properties))
+    } else {
+      val prefix = prefixCreator.getPrefix(token.text)
+      var currentPrefix = ""
+      if (prefixCreator.completePrevious) {
+        for (symbol in prefix) {
+          addAction(CallCompletion(currentPrefix, token.text, token.properties))
+          addAction(PrintText(symbol.toString(), false))
+          currentPrefix += symbol
+        }
+      }
+      else if (prefix.isNotEmpty()) addAction(PrintText(prefix, false))
+      addAction(CallCompletion(prefix, token.text, token.properties))
+      addAction(FinishSession())
+
+      if (prefix.isNotEmpty())
+        addAction(DeleteRange(token.offset, token.offset + prefix.length, true))
+      addAction(PrintText(token.text, true))
+    }
   }
 
 

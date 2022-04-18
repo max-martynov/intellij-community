@@ -11,7 +11,8 @@ class Interpreter(private val invoker: CompletionInvoker,
                   private val handler: InterpretationHandler,
                   private val filter: InterpretFilter,
                   private val saveContent: Boolean,
-                  private val projectPath: String?) {
+                  private val projectPath: String?,
+                  private val completionType: CompletionType) {
   companion object {
     const val CCE_SESSION_UID = "sessionUid"
     private const val CCE_SESSION_UID_FEATURE_NAME = "ml_ctx_cce_$CCE_SESSION_UID"
@@ -42,7 +43,7 @@ class Interpreter(private val invoker: CompletionInvoker,
         }
         is CallCompletion -> {
           isFinished = false
-          if (shouldCompleteToken) {
+          if (shouldCompleteToken && completionType != CompletionType.RENAME) {
             val lookup = invoker.callCompletion(action.expectedText, action.prefix)
             if (session == null)
               session = createSession(position, action.expectedText, action.nodeProperties, lookup)
@@ -50,7 +51,7 @@ class Interpreter(private val invoker: CompletionInvoker,
           }
         }
         is FinishSession -> {
-          if (shouldCompleteToken) {
+          if (shouldCompleteToken && completionType != CompletionType.RENAME) {
             if (session == null) throw UnexpectedActionException("Session canceled before created")
             val expectedText = session.expectedText
             isFinished = invoker.finishCompletion(expectedText, session.lookups.last().prefix)
@@ -83,20 +84,24 @@ class Interpreter(private val invoker: CompletionInvoker,
         }
         is CallRename -> {
           isFinished = false
-          val lookup = invoker.callRename(action.name, action.offset)
-          if (session == null)
-            session = createSession(position, action.name, action.nodeProperties, lookup)
-          session.addLookup(lookup)
+          if (completionType == CompletionType.RENAME) {
+            val lookup = invoker.callRename(action.name, action.offset)
+            if (session == null)
+              session = createSession(position, action.name, action.nodeProperties, lookup)
+            session.addLookup(lookup)
+          }
         }
         is FinishRename -> {
-          if (session == null) throw UnexpectedActionException("Session canceled before created")
-          val expectedText = session.expectedText
-          invoker.finishRename(expectedText)
-          session.success = session.lookups.last().suggestions.any { it.text == expectedText }
-          sessions.add(session)
-          sessionHandler(session)
-          isCanceled = handler.onSessionFinished(fileActions.path)
-          session = null
+          if (completionType == CompletionType.RENAME) {
+            if (session == null) throw UnexpectedActionException("Session canceled before created")
+            val expectedText = session.expectedText
+            invoker.finishRename(expectedText)
+            session.success = session.lookups.last().suggestions.any { it.text == expectedText }
+            sessions.add(session)
+            sessionHandler(session)
+            isCanceled = handler.onSessionFinished(fileActions.path)
+            session = null
+          }
         }
       }
       if (isCanceled) break

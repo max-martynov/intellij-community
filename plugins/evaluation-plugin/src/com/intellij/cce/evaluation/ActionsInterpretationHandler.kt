@@ -38,7 +38,7 @@ class ActionsInterpretationHandler(
     val filter =
       if (config.completeTokenProbability < 1) RandomInterpretFilter(config.completeTokenProbability, config.completeTokenSeed)
       else InterpretFilter.default()
-    val interpreter = Interpreter(completionInvoker, handler, filter, config.saveContent, project.basePath)
+    val interpreter = Interpreter(completionInvoker, handler, filter, config.saveContent, project.basePath, config.completionType)
     val featuresStorage = if (config.saveFeatures) workspace2.featuresStorage else FeaturesStorage.EMPTY
     LOG.info("Start interpreting actions")
     if (config.completeTokenProbability < 1) {
