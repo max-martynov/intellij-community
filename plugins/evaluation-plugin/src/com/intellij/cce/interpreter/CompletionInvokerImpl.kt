@@ -32,28 +32,14 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.LocalFileSystem
-import com.intellij.psi.PsiDocumentManager
-import com.intellij.refactoring.InplaceRefactoringContinuation
-import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.actions.RenameElementAction
-import com.intellij.refactoring.actions.RenamerRenderer
-import com.intellij.refactoring.rename.Renamer
-import com.intellij.refactoring.rename.RenamerFactory
 import com.intellij.refactoring.rename.inplace.InplaceRefactoring
-import com.intellij.refactoring.rename.inplace.VariableInplaceRenamer
-import com.intellij.refactoring.util.CommonRefactoringUtil
 import com.intellij.testFramework.TestModeFlags
-import com.intellij.util.SlowOperations
-import com.intellij.util.TimeoutUtil.sleep
 import java.io.File
-import java.util.stream.Collectors
-import java.util.stream.Stream
-import kotlin.concurrent.thread
 
 
 class CompletionInvokerImpl(private val project: Project,
@@ -115,7 +101,6 @@ class CompletionInvokerImpl(private val project: Project,
     val start = System.currentTimeMillis()
 
     val myEditor = editor
-
 
     if (myEditor != null) {
       val dataContext = DataManager.getInstance().getDataContext(myEditor.component)
