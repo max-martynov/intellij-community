@@ -45,7 +45,7 @@ class Interpreter(private val invoker: CompletionInvoker,
           if (shouldCompleteToken) {
             val lookup = invoker.callCompletion(action.expectedText, action.prefix)
             if (session == null)
-              session = createSession(position,  action.expectedText, action.nodeProperties, lookup)
+              session = createSession(position, action.expectedText, action.nodeProperties, lookup)
             session.addLookup(lookup)
           }
         }
@@ -83,12 +83,20 @@ class Interpreter(private val invoker: CompletionInvoker,
         }
         is CallRename -> {
           isFinished = false
-          if (shouldCompleteToken) {
-            val lookup = invoker.callRename(action.name, action.offset)
-            if (session == null)
-              session = createSession(position, action.name, action.nodeProperties, lookup)
-            session.addLookup(lookup)
-          }
+          val lookup = invoker.callRename(action.name, action.offset)
+          if (session == null)
+            session = createSession(position, action.name, action.nodeProperties, lookup)
+          session.addLookup(lookup)
+        }
+        is FinishRename -> {
+          if (session == null) throw UnexpectedActionException("Session canceled before created")
+          val expectedText = session.expectedText
+          invoker.finishRename(expectedText)
+          session.success = session.lookups.last().suggestions.any { it.text == expectedText }
+          sessions.add(session)
+          sessionHandler(session)
+          isCanceled = handler.onSessionFinished(fileActions.path)
+          session = null
         }
       }
       if (isCanceled) break

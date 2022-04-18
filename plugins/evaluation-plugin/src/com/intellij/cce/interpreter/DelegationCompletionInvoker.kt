@@ -26,13 +26,16 @@ class DelegationCompletionInvoker(private val invoker: CompletionInvoker, projec
 
   override fun callRename(expectedName: String, offset: Int): Lookup {
     return readActionWaitingForSize {
-      val lk = invoker.callRename(expectedName, offset)
-      lk
+      invoker.callRename(expectedName, offset)
     }
   }
 
   override fun finishCompletion(expectedText: String, prefix: String) = readAction {
     invoker.finishCompletion(expectedText, prefix)
+  }
+
+  override fun finishRename(expectedText: String) = readAction {
+      invoker.finishRename(expectedText)
   }
 
   override fun printText(text: String) = writeAction {
@@ -98,4 +101,5 @@ class DelegationCompletionInvoker(private val invoker: CompletionInvoker, projec
   private fun onEdt(action: () -> Unit) = ApplicationManager.getApplication().invokeAndWait {
     action()
   }
+
 }

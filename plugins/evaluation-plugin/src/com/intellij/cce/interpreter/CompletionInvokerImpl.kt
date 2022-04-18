@@ -25,7 +25,6 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorModificationUtil
 import com.intellij.openapi.editor.ScrollType
-import com.intellij.openapi.editor.impl.EditorComponentImpl
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.impl.TrailingSpacesStripper
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -39,7 +38,6 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.psi.PsiDocumentManager
-import com.intellij.psi.PsiFileFactory
 import com.intellij.refactoring.InplaceRefactoringContinuation
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.actions.RenameElementAction
@@ -47,12 +45,15 @@ import com.intellij.refactoring.actions.RenamerRenderer
 import com.intellij.refactoring.rename.Renamer
 import com.intellij.refactoring.rename.RenamerFactory
 import com.intellij.refactoring.rename.inplace.InplaceRefactoring
+import com.intellij.refactoring.rename.inplace.VariableInplaceRenamer
 import com.intellij.refactoring.util.CommonRefactoringUtil
 import com.intellij.testFramework.TestModeFlags
 import com.intellij.util.SlowOperations
+import com.intellij.util.TimeoutUtil.sleep
 import java.io.File
 import java.util.stream.Collectors
 import java.util.stream.Stream
+import kotlin.concurrent.thread
 
 
 class CompletionInvokerImpl(private val project: Project,
@@ -77,7 +78,6 @@ class CompletionInvokerImpl(private val project: Project,
   private var spaceStrippingEnabled: Boolean = true
   private val userEmulator: UserEmulator = UserEmulator.create(userEmulationSettings)
   private val dumbService = DumbService.getInstance(project)
-
   
   override fun moveCaret(offset: Int) {
     LOG.info("Move caret. ${positionToString(offset)}")
@@ -116,24 +116,21 @@ class CompletionInvokerImpl(private val project: Project,
 
     val myEditor = editor
 
+
     if (myEditor != null) {
-
       val dataContext = DataManager.getInstance().getDataContext(myEditor.component)
-
       val anActionEvent = AnActionEvent(null, dataContext, "", Presentation(), ActionManager.getInstance(), 0)
-
       RenameElementAction().actionPerformed(anActionEvent)
     }
-
     val activeLookup = LookupManager.getActiveLookup(myEditor)
 
     var suggestions = listOf<Suggestion>()
+    var resultFeatures = Features.EMPTY
 
     if (activeLookup != null) {
-
       val lookup = activeLookup as LookupImpl
       val features = MLCompletionFeaturesUtil.getCommonFeatures(lookup)
-      val resultFeatures = Features(
+      resultFeatures = Features(
         CommonFeatures(features.context, features.user, features.session),
         lookup.items.map { MLCompletionFeaturesUtil.getElementFeatures(lookup, it).features }
       )
@@ -142,12 +139,7 @@ class CompletionInvokerImpl(private val project: Project,
 
     val latency = System.currentTimeMillis() - start
 
-    return com.intellij.cce.core.Lookup.fromExpectedText(
-      expectedName,
-      "",
-      suggestions,
-      latency
-    )
+    return com.intellij.cce.core.Lookup.fromExpectedText(expectedName, "", suggestions, latency, resultFeatures)
   }
 
   override fun finishCompletion(expectedText: String, prefix: String): Boolean {
@@ -156,16 +148,20 @@ class CompletionInvokerImpl(private val project: Project,
     val lookup = LookupManager.getActiveLookup(editor) as? LookupImpl ?: return false
     val expectedItemIndex = lookup.items.indexOfFirst { it.lookupString == expectedText }
     try {
-      val ir = InplaceRefactoring.getActiveInplaceRenamer(editor)
-      ir.finish(true)
-    } catch(_: Exception) {
-
-    }
-    try {
       return if (expectedItemIndex != -1) lookup.finish(expectedItemIndex, expectedText.length - prefix.length) else false
     }
     finally {
       lookup.hide()
+    }
+  }
+
+  override fun finishRename(expectedText: String) {
+    LOG.info("Finish rename. Expected text: $expectedText")
+    val lookup = LookupManager.getActiveLookup(editor) as? LookupImpl ?: return
+    lookup.hide()
+    if (editor != null) {
+      InplaceRefactoring.getActiveInplaceRenamer(editor).finish(true)
+      PsiDocumentManager.getInstance(project).commitAllDocuments()
     }
   }
 
