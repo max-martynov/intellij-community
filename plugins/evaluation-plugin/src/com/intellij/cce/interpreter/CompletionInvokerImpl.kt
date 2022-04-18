@@ -36,6 +36,7 @@ import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.psi.PsiDocumentManager
 import com.intellij.refactoring.actions.RenameElementAction
 import com.intellij.refactoring.rename.inplace.InplaceRefactoring
 import com.intellij.testFramework.TestModeFlags
