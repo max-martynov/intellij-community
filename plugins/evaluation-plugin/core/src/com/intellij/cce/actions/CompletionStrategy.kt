@@ -24,7 +24,8 @@ enum class CompletionType {
   SMART,
   ML,
   FULL_LINE, // python only
-  CLANGD // c++ only
+  CLANGD, // c++ only
+  RENAME
 }
 
 enum class CompletionContext {

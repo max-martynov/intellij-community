@@ -22,6 +22,7 @@ class CompletionTypeConfigurable : EvaluationConfigurable {
           radioButton(EvaluationPluginBundle.message("evaluation.settings.type.smart")).configure(CompletionType.SMART)
           radioButton(EvaluationPluginBundle.message("evaluation.settings.type.ml")).configure(CompletionType.ML)
           radioButton(EvaluationPluginBundle.message("evaluation.settings.type.full.line")).configure(CompletionType.FULL_LINE).enabled(isFullLineEnabled())
+          radioButton(EvaluationPluginBundle.message("evaluation.settings.type.rename")).configure(CompletionType.RENAME)
         }
       }
     }
