@@ -22,9 +22,12 @@ class DelegationActionsInvoker(private val invoker: ActionsInvoker, project: Pro
     }
   }
 
-  override fun finishRename(expectedText: String, prefix: String) = readAction {
-    invoker.finishCompletion(expectedText, prefix)
+  override fun finishSession(expectedText: String, prefix: String): Boolean {
+    return readActionWaitingForSize {
+      invoker.finishSession(expectedText, prefix)
+    }
   }
+
 
   override fun printText(text: String) = writeAction {
     invoker.printText(text)

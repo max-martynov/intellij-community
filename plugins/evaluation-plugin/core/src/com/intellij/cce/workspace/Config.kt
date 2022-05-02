@@ -2,9 +2,6 @@ package com.intellij.cce.workspace
 
 import com.intellij.cce.actions.*
 import com.intellij.cce.filter.EvaluationFilter
-import com.intellij.cce.generalization.ActionsGenerationStrategy
-import com.intellij.cce.generalization.FeatureCore
-import com.intellij.cce.generalization.RenameCore
 import com.intellij.cce.workspace.filter.CompareSessionsFilter
 import com.intellij.cce.workspace.filter.NamedFilter
 import com.intellij.cce.workspace.filter.SessionsFilter
@@ -17,8 +14,7 @@ data class Config internal constructor(
   val actions: ActionsGeneration,
   val interpret: ActionsInterpretation,
   val reorder: ReorderElements,
-  val reports: ReportGeneration,
-  val featureCore: FeatureCore = RenameCore()
+  val reports: ReportGeneration
 ) {
   companion object {
     fun build(projectPath: String, language: String, init: Builder.() -> Unit): Config {
@@ -36,8 +32,7 @@ data class Config internal constructor(
 
   data class ActionsGeneration internal constructor(
     val evaluationRoots: List<String>,
-    val strategy: CompletionStrategy,
-    val actionsGeneration: ActionsGenerationStrategy
+    val strategy: CompletionStrategy
   )
 
   data class ActionsInterpretation internal constructor(
@@ -136,8 +131,7 @@ data class Config internal constructor(
       outputDir,
       ActionsGeneration(
         evaluationRoots,
-        CompletionStrategy(prefixStrategy, contextStrategy, emulateUser, codeGolf, filters),
-        RenameCore().actionsGenerationStrategy
+        CompletionStrategy(prefixStrategy, contextStrategy, emulateUser, codeGolf, filters)
       ),
       ActionsInterpretation(
         completionType,

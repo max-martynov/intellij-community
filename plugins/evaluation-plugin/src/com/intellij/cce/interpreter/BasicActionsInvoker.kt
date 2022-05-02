@@ -38,7 +38,7 @@ abstract class BasicActionsInvoker(private val project: Project,
                                    completionType: com.intellij.cce.actions.CompletionType,
                                    userEmulationSettings: UserEmulator.Settings?,
                                    private val codeGolfSettings: CodeGolfEmulation.Settings?) : ActionsInvoker {
-  private companion object {
+  protected companion object {
     val LOG = Logger.getInstance(BasicActionsInvoker::class.java)
     const val LOG_MAX_LENGTH = 50
   }
@@ -47,11 +47,11 @@ abstract class BasicActionsInvoker(private val project: Project,
     TestModeFlags.set(CompletionAutoPopupHandler.ourTestingAutopopup, true)
   }
 
-  private val completionType = when (completionType) {
+  protected val completionType = when (completionType) {
     com.intellij.cce.actions.CompletionType.SMART -> CompletionType.SMART
     else -> CompletionType.BASIC
   }
-  private var editor: Editor? = null
+  protected var editor: Editor? = null
   private var spaceStrippingEnabled: Boolean = true
   private val userEmulator: UserEmulator = UserEmulator.create(userEmulationSettings)
   private val dumbService = DumbService.getInstance(project)
@@ -252,35 +252,12 @@ abstract class BasicActionsInvoker(private val project: Project,
     return session
   }
 
-  private fun positionToString(offset: Int): String {
+  protected fun positionToString(offset: Int): String {
     val logicalPosition = editor!!.offsetToLogicalPosition(offset)
     return "Offset: $offset, Line: ${logicalPosition.line}, Column: ${logicalPosition.column}."
   }
 
-  private fun invokeCompletion(expectedText: String, prefix: String?): LookupEx? {
-    val handlerFactory = CodeCompletionHandlerFactory.findCompletionHandlerFactory(project, language)
-    val handler = handlerFactory?.createHandler(completionType, expectedText, prefix) ?: object : CodeCompletionHandlerBase(completionType,
-                                                                                                                            false, false,
-                                                                                                                            true) {
-      // Guarantees synchronous execution
-      override fun isTestingCompletionQualityMode() = true
-      override fun lookupItemSelected(indicator: CompletionProgressIndicator?,
-                                      item: LookupElement,
-                                      completionChar: Char,
-                                      items: MutableList<LookupElement>?) {
-        afterItemInsertion(indicator, null)
-      }
-    }
-    try {
-      handler.invokeCompletion(project, editor)
-    }
-    catch (e: AssertionError) {
-      LOG.warn("Completion invocation ended with error", e)
-    }
-    return LookupManager.getActiveLookup(editor)
-  }
-
-  private fun LookupImpl.finish(expectedItemIndex: Int, completionLength: Int): Boolean {
+  protected fun LookupImpl.finish(expectedItemIndex: Int, completionLength: Int): Boolean {
     selectedIndex = expectedItemIndex
     val document = editor.document
     val lengthBefore = document.textLength
@@ -301,7 +278,7 @@ abstract class BasicActionsInvoker(private val project: Project,
 
   private fun hideLookup() = (LookupManager.getActiveLookup(editor) as? LookupImpl)?.hide()
 
-  private fun LookupElement.asSuggestion(): Suggestion {
+  protected fun LookupElement.asSuggestion(): Suggestion {
     val presentation = LookupElementPresentation()
     renderElement(presentation)
     val presentationText = "${presentation.itemText}${presentation.tailText ?: ""}" +

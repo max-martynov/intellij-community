@@ -1,7 +1,9 @@
 package com.intellij.cce.evaluation
 
+import com.intellij.cce.actions.CompletionType
 import com.intellij.cce.core.Language
 import com.intellij.cce.evaluation.step.*
+import com.intellij.cce.generalization.EvaluableFeature
 import com.intellij.cce.interpreter.ActionsInvoker
 import com.intellij.cce.interpreter.BasicActionsInvoker
 import com.intellij.cce.interpreter.DelegationActionsInvoker
@@ -19,17 +21,26 @@ class BackgroundStepFactory(
   private val evaluationRootInfo: EvaluationRootInfo
 ) : StepFactory {
 
-  {
-    config.featureCore.actionsInvoker = 
-  }
+  private val featureName =
+    if (config.interpret.completionType == CompletionType.RENAME)
+      "rename"
+    else
+      "completion"
+  private var evaluableFeature = EvaluableFeature.forFeature(project, featureName)!!
 
   private var myActionsInvoker: ActionsInvoker = DelegationActionsInvoker(
-    BasicActionsInvoker(project, Language.resolve(config.language),
-                        config.interpret.completionType, config.interpret.emulationSettings, config.interpret.codeGolfSettings),
-    project)
+    evaluableFeature.getActionsInvoker(
+      project,
+      Language.resolve(config.language),
+      config.interpret.completionType,
+      config.interpret.emulationSettings,
+      config.interpret.codeGolfSettings
+    ),
+    project
+  )
 
   override fun generateActionsStep(): EvaluationStep =
-    ActionsGenerationStep(config.actions, config.language, evaluationRootInfo, project, isHeadless)
+    ActionsGenerationStep(config.actions, config.language, evaluationRootInfo, project, isHeadless, evaluableFeature.generateActionsProcessor)
 
   override fun interpretActionsStep(): EvaluationStep =
     ActionsInterpretationStep(config.interpret, config.language, myActionsInvoker, project, isHeadless)

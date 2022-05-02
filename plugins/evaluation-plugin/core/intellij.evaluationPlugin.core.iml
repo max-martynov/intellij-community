@@ -25,7 +25,5 @@
     <orderEntry type="library" name="commons-codec" level="project" />
     <orderEntry type="library" name="commons-compress" level="project" />
     <orderEntry type="library" name="Velocity" level="project" />
-    <orderEntry type="module" module-name="intellij.evaluationPlugin" />
-    <orderEntry type="module" module-name="intellij.evaluationPlugin" />
   </component>
 </module>

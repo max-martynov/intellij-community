@@ -6,9 +6,9 @@ import com.intellij.cce.core.PropertyAdapters
 import com.intellij.cce.core.SymbolLocation
 import com.intellij.cce.core.TokenProperties
 import com.intellij.cce.evaluation.EvaluationRootInfo
-import com.intellij.cce.generalization.ActionsGenerationStrategy
 import com.intellij.cce.processor.DefaultEvaluationRootProcessor
 import com.intellij.cce.processor.EvaluationRootByRangeProcessor
+import com.intellij.cce.processor.GenerateActionsProcessor
 import com.intellij.cce.util.ExceptionsUtil.stackTraceToString
 import com.intellij.cce.util.FilesHelper
 import com.intellij.cce.util.Progress
@@ -25,21 +25,23 @@ class ActionsGenerationStep(
   private val language: String,
   private val evaluationRootInfo: EvaluationRootInfo,
   project: Project,
-  isHeadless: Boolean) : BackgroundEvaluationStep(project, isHeadless) {
+  isHeadless: Boolean,
+  private val generateActionsProcessor: GenerateActionsProcessor
+  ) : BackgroundEvaluationStep(project, isHeadless) {
   override val name: String = "Generating actions"
 
   override val description: String = "Generating actions by selected files"
 
   override fun runInBackground(workspace: EvaluationWorkspace, progress: Progress): EvaluationWorkspace {
     val filesForEvaluation = FilesHelper.getFilesOfLanguage(project, config.evaluationRoots, language)
-    generateActions(workspace, language, filesForEvaluation, config.strategy, config.actionsGeneration, evaluationRootInfo, progress)
+    generateActions(workspace, language, filesForEvaluation, config.strategy, evaluationRootInfo, progress)
     return workspace
   }
 
   private fun generateActions(workspace: EvaluationWorkspace, languageName: String, files: Collection<VirtualFile>,
-                              strategy: CompletionStrategy, actionsGeneration: ActionsGenerationStrategy,
+                              strategy: CompletionStrategy,
                               evaluationRootInfo: EvaluationRootInfo, indicator: Progress) {
-    val actionsGenerator = ActionsGenerator(strategy, actionsGeneration)
+    val actionsGenerator = ActionsGenerator(strategy, generateActionsProcessor)
     val codeFragmentBuilder = CodeFragmentBuilder.create(project, languageName)
 
     val errors = mutableListOf<FileErrorInfo>()
@@ -133,11 +135,11 @@ class ActionsGenerationStep(
       }
     }
 
-    private fun List<Action>.asSessionStarts(): Iterable<CallCompletion> {
-      val result = mutableListOf<CallCompletion>()
+    private fun List<Action>.asSessionStarts(): Iterable<CallFeature> {
+      val result = mutableListOf<CallFeature>()
       var insideSession = false
       for (action in this) {
-        if (!insideSession && action is CallCompletion) {
+        if (!insideSession && action is CallFeature) {
           result.add(action)
           insideSession = true
         }
@@ -157,7 +159,7 @@ class ActionsGenerationStep(
       PROJECT, JRE, THIRD_PARTY, UNKNOWN_LOCATION, UNKNOWN_PACKAGE
     }
 
-    private fun CallCompletion.kind(): CompletionKind {
+    private fun CallFeature.kind(): CompletionKind {
       if (nodeProperties.location == SymbolLocation.PROJECT) return CompletionKind.PROJECT
       if (nodeProperties.location == SymbolLocation.UNKNOWN) return CompletionKind.UNKNOWN_LOCATION
       val packageName = nodeProperties.java()?.packageName ?: return CompletionKind.UNKNOWN_PACKAGE

@@ -44,7 +44,7 @@ class Interpreter(private val invoker: ActionsInvoker,
         is CallFeature -> {
           isFinished = false
           if (shouldCompleteToken) {
-            val lookup = invoker.callCompletion(action.expectedText, action.prefix)
+            val lookup = invoker.callFeature(action.expectedText, action.prefix)
             if (session == null)
               session = createSession(position, action.expectedText, action.nodeProperties, lookup)
             session.addLookup(lookup)
@@ -54,7 +54,7 @@ class Interpreter(private val invoker: ActionsInvoker,
           if (shouldCompleteToken) {
             if (session == null) throw UnexpectedActionException("Session canceled before created")
             val expectedText = session.expectedText
-            isFinished = invoker.finishCompletion(expectedText, session.lookups.last().prefix)
+            isFinished = invoker.finishSession(expectedText, session.lookups.last().prefix)
             session.success = session.lookups.last().suggestions.any { it.text == expectedText }
             sessions.add(session)
             sessionHandler(session)
