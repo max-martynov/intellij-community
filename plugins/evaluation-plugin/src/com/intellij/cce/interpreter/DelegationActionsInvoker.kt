@@ -7,10 +7,8 @@ import com.intellij.cce.util.ListSizeRestriction
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
-import com.intellij.psi.PsiElement
-import com.intellij.util.TimeoutUtil.sleep
 
-class DelegationCompletionInvoker(private val invoker: CompletionInvoker, project: Project) : CompletionInvoker {
+class DelegationActionsInvoker(private val invoker: ActionsInvoker, project: Project) : ActionsInvoker {
   private val applicationListenersRestriction = ListSizeRestriction.applicationListeners()
   private val dumbService = DumbService.getInstance(project)
 
@@ -18,24 +16,14 @@ class DelegationCompletionInvoker(private val invoker: CompletionInvoker, projec
     invoker.moveCaret(offset)
   }
 
-  override fun callCompletion(expectedText: String, prefix: String?): Lookup {
+  override fun callFeature(expectedText: String, prefix: String?): Lookup {
     return readActionWaitingForSize {
-      invoker.callCompletion(expectedText, prefix)
+      invoker.callFeature(expectedText, prefix)
     }
   }
 
-  override fun callRename(expectedName: String, offset: Int): Lookup {
-    return readActionWaitingForSize {
-      invoker.callRename(expectedName, offset)
-    }
-  }
-
-  override fun finishCompletion(expectedText: String, prefix: String) = readAction {
+  override fun finishRename(expectedText: String, prefix: String) = readAction {
     invoker.finishCompletion(expectedText, prefix)
-  }
-
-  override fun finishRename(expectedText: String) = readAction {
-      invoker.finishRename(expectedText)
   }
 
   override fun printText(text: String) = writeAction {

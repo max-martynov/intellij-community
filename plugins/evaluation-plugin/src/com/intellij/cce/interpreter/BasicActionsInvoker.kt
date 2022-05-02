@@ -12,13 +12,6 @@ import com.intellij.codeInsight.editorActions.CompletionAutoPopupHandler
 import com.intellij.codeInsight.lookup.*
 import com.intellij.codeInsight.lookup.Lookup
 import com.intellij.codeInsight.lookup.impl.LookupImpl
-import com.intellij.completion.ml.actions.MLCompletionFeaturesUtil
-import com.intellij.completion.ml.util.prefix
-import com.intellij.ide.DataManager
-import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.command.impl.UndoManagerImpl
 import com.intellij.openapi.diagnostic.Logger
@@ -36,20 +29,17 @@ import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.LocalFileSystem
-import com.intellij.psi.PsiDocumentManager
-import com.intellij.refactoring.actions.RenameElementAction
-import com.intellij.refactoring.rename.inplace.InplaceRefactoring
 import com.intellij.testFramework.TestModeFlags
 import java.io.File
 
 
-class CompletionInvokerImpl(private val project: Project,
-                            private val language: Language,
-                            completionType: com.intellij.cce.actions.CompletionType,
-                            userEmulationSettings: UserEmulator.Settings?,
-                            private val codeGolfSettings: CodeGolfEmulation.Settings?) : CompletionInvoker {
+abstract class BasicActionsInvoker(private val project: Project,
+                                   private val language: Language,
+                                   completionType: com.intellij.cce.actions.CompletionType,
+                                   userEmulationSettings: UserEmulator.Settings?,
+                                   private val codeGolfSettings: CodeGolfEmulation.Settings?) : ActionsInvoker {
   private companion object {
-    val LOG = Logger.getInstance(CompletionInvokerImpl::class.java)
+    val LOG = Logger.getInstance(BasicActionsInvoker::class.java)
     const val LOG_MAX_LENGTH = 50
   }
 
@@ -72,84 +62,84 @@ class CompletionInvokerImpl(private val project: Project,
     editor!!.scrollingModel.scrollToCaret(ScrollType.MAKE_VISIBLE)
   }
 
-  override fun callCompletion(expectedText: String, prefix: String?): com.intellij.cce.core.Lookup {
-    LOG.info("Call completion. Type: $completionType. ${positionToString(editor!!.caretModel.offset)}")
-//        assert(!dumbService.isDumb) { "Calling completion during indexing." }
-
-    val start = System.currentTimeMillis()
-    val isNew = LookupManager.getActiveLookup(editor) == null
-    val activeLookup = invokeCompletion(expectedText, prefix)
-    val latency = System.currentTimeMillis() - start
-    if (activeLookup == null) {
-      return com.intellij.cce.core.Lookup.fromExpectedText(expectedText, prefix ?: "", emptyList(), latency, isNew = isNew)
-    }
-
-    val lookup = activeLookup as LookupImpl
-    val features = MLCompletionFeaturesUtil.getCommonFeatures(lookup)
-    val resultFeatures = Features(
-      CommonFeatures(features.context, features.user, features.session),
-      lookup.items.map { MLCompletionFeaturesUtil.getElementFeatures(lookup, it).features }
-    )
-    val suggestions = lookup.items.map { it.asSuggestion() }
-
-    return com.intellij.cce.core.Lookup.fromExpectedText(expectedText, lookup.prefix(), suggestions, latency, resultFeatures, isNew)
-  }
-
-  override fun callRename(expectedName: String, offset: Int): com.intellij.cce.core.Lookup {
-    LOG.info("Call rename. Type: $completionType. ${positionToString(editor!!.caretModel.offset)}")
-    //        assert(!dumbService.isDumb) { "Calling completion during indexing." }
-
-    val start = System.currentTimeMillis()
-
-    val myEditor = editor
-
-    if (myEditor != null) {
-      val dataContext = DataManager.getInstance().getDataContext(myEditor.component)
-      val anActionEvent = AnActionEvent(null, dataContext, "", Presentation(), ActionManager.getInstance(), 0)
-      RenameElementAction().actionPerformed(anActionEvent)
-    }
-    val activeLookup = LookupManager.getActiveLookup(myEditor)
-
-    var suggestions = listOf<Suggestion>()
-    var resultFeatures = Features.EMPTY
-
-    if (activeLookup != null) {
-      val lookup = activeLookup as LookupImpl
-      val features = MLCompletionFeaturesUtil.getCommonFeatures(lookup)
-      resultFeatures = Features(
-        CommonFeatures(features.context, features.user, features.session),
-        lookup.items.map { MLCompletionFeaturesUtil.getElementFeatures(lookup, it).features }
-      )
-      suggestions = lookup.items.map { it.asSuggestion() }
-    }
-
-    val latency = System.currentTimeMillis() - start
-
-    return com.intellij.cce.core.Lookup.fromExpectedText(expectedName, "", suggestions, latency, resultFeatures)
-  }
-
-  override fun finishCompletion(expectedText: String, prefix: String): Boolean {
-    LOG.info("Finish completion. Expected text: $expectedText")
-    if (completionType == CompletionType.SMART) return false
-    val lookup = LookupManager.getActiveLookup(editor) as? LookupImpl ?: return false
-    val expectedItemIndex = lookup.items.indexOfFirst { it.lookupString == expectedText }
-    try {
-      return if (expectedItemIndex != -1) lookup.finish(expectedItemIndex, expectedText.length - prefix.length) else false
-    }
-    finally {
-      lookup.hide()
-    }
-  }
-
-  override fun finishRename(expectedText: String) {
-    LOG.info("Finish rename. Expected text: $expectedText")
-    val lookup = LookupManager.getActiveLookup(editor) as? LookupImpl ?: return
-    lookup.hide()
-    if (editor != null) {
-      InplaceRefactoring.getActiveInplaceRenamer(editor).finish(true)
-      PsiDocumentManager.getInstance(project).commitAllDocuments()
-    }
-  }
+//  override fun callCompletion(expectedText: String, prefix: String?): com.intellij.cce.core.Lookup {
+//    LOG.info("Call completion. Type: $completionType. ${positionToString(editor!!.caretModel.offset)}")
+////        assert(!dumbService.isDumb) { "Calling completion during indexing." }
+//
+//    val start = System.currentTimeMillis()
+//    val isNew = LookupManager.getActiveLookup(editor) == null
+//    val activeLookup = invokeCompletion(expectedText, prefix)
+//    val latency = System.currentTimeMillis() - start
+//    if (activeLookup == null) {
+//      return com.intellij.cce.core.Lookup.fromExpectedText(expectedText, prefix ?: "", emptyList(), latency, isNew = isNew)
+//    }
+//
+//    val lookup = activeLookup as LookupImpl
+//    val features = MLCompletionFeaturesUtil.getCommonFeatures(lookup)
+//    val resultFeatures = Features(
+//      CommonFeatures(features.context, features.user, features.session),
+//      lookup.items.map { MLCompletionFeaturesUtil.getElementFeatures(lookup, it).features }
+//    )
+//    val suggestions = lookup.items.map { it.asSuggestion() }
+//
+//    return com.intellij.cce.core.Lookup.fromExpectedText(expectedText, lookup.prefix(), suggestions, latency, resultFeatures, isNew)
+//  }
+//
+//  override fun callRename(expectedName: String, offset: Int): com.intellij.cce.core.Lookup {
+//    LOG.info("Call rename. Type: $completionType. ${positionToString(editor!!.caretModel.offset)}")
+//    //        assert(!dumbService.isDumb) { "Calling completion during indexing." }
+//
+//    val start = System.currentTimeMillis()
+//
+//    val myEditor = editor
+//
+//    if (myEditor != null) {
+//      val dataContext = DataManager.getInstance().getDataContext(myEditor.component)
+//      val anActionEvent = AnActionEvent(null, dataContext, "", Presentation(), ActionManager.getInstance(), 0)
+//      RenameElementAction().actionPerformed(anActionEvent)
+//    }
+//    val activeLookup = LookupManager.getActiveLookup(myEditor)
+//
+//    var suggestions = listOf<Suggestion>()
+//    var resultFeatures = Features.EMPTY
+//
+//    if (activeLookup != null) {
+//      val lookup = activeLookup as LookupImpl
+//      val features = MLCompletionFeaturesUtil.getCommonFeatures(lookup)
+//      resultFeatures = Features(
+//        CommonFeatures(features.context, features.user, features.session),
+//        lookup.items.map { MLCompletionFeaturesUtil.getElementFeatures(lookup, it).features }
+//      )
+//      suggestions = lookup.items.map { it.asSuggestion() }
+//    }
+//
+//    val latency = System.currentTimeMillis() - start
+//
+//    return com.intellij.cce.core.Lookup.fromExpectedText(expectedName, "", suggestions, latency, resultFeatures)
+//  }
+//
+//  override fun finishCompletion(expectedText: String, prefix: String): Boolean {
+//    LOG.info("Finish completion. Expected text: $expectedText")
+//    if (completionType == CompletionType.SMART) return false
+//    val lookup = LookupManager.getActiveLookup(editor) as? LookupImpl ?: return false
+//    val expectedItemIndex = lookup.items.indexOfFirst { it.lookupString == expectedText }
+//    try {
+//      return if (expectedItemIndex != -1) lookup.finish(expectedItemIndex, expectedText.length - prefix.length) else false
+//    }
+//    finally {
+//      lookup.hide()
+//    }
+//  }
+//
+//  override fun finishRename(expectedText: String) {
+//    LOG.info("Finish rename. Expected text: $expectedText")
+//    val lookup = LookupManager.getActiveLookup(editor) as? LookupImpl ?: return
+//    lookup.hide()
+//    if (editor != null) {
+//      InplaceRefactoring.getActiveInplaceRenamer(editor).finish(true)
+//      PsiDocumentManager.getInstance(project).commitAllDocuments()
+//    }
+//  }
 
   override fun printText(text: String) {
     LOG.info("Print text: ${StringUtil.shortenPathWithEllipsis(text, LOG_MAX_LENGTH)}. ${positionToString(editor!!.caretModel.offset)}")
@@ -219,12 +209,12 @@ class CompletionInvokerImpl(private val project: Project,
     for (ch in currentPrefix) editorImpl.type(ch.toString())
     var order = 0
     while (currentPrefix.length < expectedText.length) {
-      val position = callCompletion(expectedText, currentPrefix)
+      val position = callFeature(expectedText, currentPrefix)
         .also { session.addLookup(it) }
         .selectedPosition
 
       if (position != -1 && userEmulator.selectElement(position, currentPrefix.length)) {
-        val success = finishCompletion(expectedText, currentPrefix)
+        val success = finishSession(expectedText, currentPrefix)
         if (!success) printText(expectedText.substring(currentPrefix.length))
         session.success = success
         break
@@ -245,7 +235,7 @@ class CompletionInvokerImpl(private val project: Project,
     var currentString = ""
 
     while (currentString != expectedLine) {
-      val lookup = callCompletion(expectedLine, null)
+      val lookup = callFeature(expectedLine, null)
 
       emulator.pickBestSuggestion(currentString, lookup, session).also {
         printText(it.selectedWithoutPrefix() ?: expectedLine[currentString.length].toString())

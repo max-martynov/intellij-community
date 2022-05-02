@@ -2,9 +2,9 @@ package com.intellij.cce.evaluation
 
 import com.intellij.cce.core.Language
 import com.intellij.cce.evaluation.step.*
-import com.intellij.cce.interpreter.CompletionInvoker
-import com.intellij.cce.interpreter.CompletionInvokerImpl
-import com.intellij.cce.interpreter.DelegationCompletionInvoker
+import com.intellij.cce.interpreter.ActionsInvoker
+import com.intellij.cce.interpreter.BasicActionsInvoker
+import com.intellij.cce.interpreter.DelegationActionsInvoker
 import com.intellij.cce.metric.SuggestionsComparator
 import com.intellij.cce.workspace.Config
 import com.intellij.cce.workspace.EvaluationWorkspace
@@ -19,23 +19,27 @@ class BackgroundStepFactory(
   private val evaluationRootInfo: EvaluationRootInfo
 ) : StepFactory {
 
-  private var completionInvoker: CompletionInvoker = DelegationCompletionInvoker(
-    CompletionInvokerImpl(project, Language.resolve(config.language),
-                          config.interpret.completionType, config.interpret.emulationSettings, config.interpret.codeGolfSettings),
+  {
+    config.featureCore.actionsInvoker = 
+  }
+
+  private var myActionsInvoker: ActionsInvoker = DelegationActionsInvoker(
+    BasicActionsInvoker(project, Language.resolve(config.language),
+                        config.interpret.completionType, config.interpret.emulationSettings, config.interpret.codeGolfSettings),
     project)
 
   override fun generateActionsStep(): EvaluationStep =
     ActionsGenerationStep(config.actions, config.language, evaluationRootInfo, project, isHeadless)
 
   override fun interpretActionsStep(): EvaluationStep =
-    ActionsInterpretationStep(config.interpret, config.language, completionInvoker, project, isHeadless)
+    ActionsInterpretationStep(config.interpret, config.language, myActionsInvoker, project, isHeadless)
 
   override fun generateReportStep(): EvaluationStep =
     ReportGenerationStep(inputWorkspacePaths?.map { EvaluationWorkspace.open(it) },
                          config.reports.sessionsFilters, config.reports.comparisonFilters, project, isHeadless)
 
   override fun interpretActionsOnNewWorkspaceStep(): EvaluationStep =
-    ActionsInterpretationOnNewWorkspaceStep(config, completionInvoker, project, isHeadless)
+    ActionsInterpretationOnNewWorkspaceStep(config, myActionsInvoker, project, isHeadless)
 
   override fun reorderElements(): EvaluationStep =
     ReorderElementsStep(config, project, isHeadless)

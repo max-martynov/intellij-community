@@ -10,7 +10,7 @@ import com.intellij.cce.core.Language
 import com.intellij.cce.core.CodeFragment
 import com.intellij.cce.core.CodeToken
 
-class PythonCompletionEvaluationVisitor : CompletionEvaluationVisitor, PyRecursiveElementVisitor() {
+class PythonCompletionEvaluationVisitor : EvaluationVisitor, PyRecursiveElementVisitor() {
   private var _codeFragment: CodeFragment? = null
   private val tokenSetContributor = PythonTokenSetContributor()
 

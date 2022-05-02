@@ -6,6 +6,7 @@ import com.intellij.cce.core.PropertyAdapters
 import com.intellij.cce.core.SymbolLocation
 import com.intellij.cce.core.TokenProperties
 import com.intellij.cce.evaluation.EvaluationRootInfo
+import com.intellij.cce.generalization.ActionsGenerationStrategy
 import com.intellij.cce.processor.DefaultEvaluationRootProcessor
 import com.intellij.cce.processor.EvaluationRootByRangeProcessor
 import com.intellij.cce.util.ExceptionsUtil.stackTraceToString
@@ -31,13 +32,14 @@ class ActionsGenerationStep(
 
   override fun runInBackground(workspace: EvaluationWorkspace, progress: Progress): EvaluationWorkspace {
     val filesForEvaluation = FilesHelper.getFilesOfLanguage(project, config.evaluationRoots, language)
-    generateActions(workspace, language, filesForEvaluation, config.strategy, evaluationRootInfo, progress)
+    generateActions(workspace, language, filesForEvaluation, config.strategy, config.actionsGeneration, evaluationRootInfo, progress)
     return workspace
   }
 
   private fun generateActions(workspace: EvaluationWorkspace, languageName: String, files: Collection<VirtualFile>,
-                              strategy: CompletionStrategy, evaluationRootInfo: EvaluationRootInfo, indicator: Progress) {
-    val actionsGenerator = ActionsGenerator(strategy)
+                              strategy: CompletionStrategy, actionsGeneration: ActionsGenerationStrategy,
+                              evaluationRootInfo: EvaluationRootInfo, indicator: Progress) {
+    val actionsGenerator = ActionsGenerator(strategy, actionsGeneration)
     val codeFragmentBuilder = CodeFragmentBuilder.create(project, languageName)
 
     val errors = mutableListOf<FileErrorInfo>()

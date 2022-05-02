@@ -17,7 +17,7 @@ import com.intellij.cce.util.text
 class CodeFragmentFromPsiBuilder(private val project: Project, val language: Language) : CodeFragmentBuilder() {
   private val dumbService: DumbService = DumbService.getInstance(project)
 
-  private fun getVisitors(): List<CompletionEvaluationVisitor> = CompletionEvaluationVisitor.EP_NAME.extensions.toList()
+  private fun getVisitors(): List<EvaluationVisitor> = EvaluationVisitor.EP_NAME.extensions.toList()
 
   override fun build(file: VirtualFile, rootProcessor: EvaluationRootProcessor): CodeFragment {
     val psi = dumbService.runReadActionInSmartMode<PsiFile> {
@@ -34,7 +34,7 @@ class CodeFragmentFromPsiBuilder(private val project: Project, val language: Lan
     return findRoot(fileTokens, rootProcessor)
   }
 
-  private fun getFileTokens(visitor: CompletionEvaluationVisitor, psi: PsiElement): CodeFragment {
+  private fun getFileTokens(visitor: EvaluationVisitor, psi: PsiElement): CodeFragment {
     if (visitor !is PsiElementVisitor) throw IllegalArgumentException("Visitor must implement PsiElementVisitor")
     dumbService.runReadActionInSmartMode {
       assert(!dumbService.isDumb) { "Generating actions during indexing." }

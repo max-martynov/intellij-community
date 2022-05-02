@@ -25,7 +25,7 @@
 
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.cce.completionEvaluationVisitor"
-                    interface="com.intellij.cce.visitor.CompletionEvaluationVisitor"
+                    interface="com.intellij.cce.visitor.EvaluationVisitor"
                     dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.cce.codeCompletionHandlerFactory" area="IDEA_PROJECT"
                     interface="com.intellij.cce.evaluation.CodeCompletionHandlerFactory"

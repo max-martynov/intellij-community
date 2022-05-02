@@ -4,12 +4,10 @@ import com.intellij.cce.core.Lookup
 import com.intellij.cce.core.Session
 import com.intellij.cce.core.TokenProperties
 
-interface CompletionInvoker {
+interface ActionsInvoker {
   fun moveCaret(offset: Int)
-  fun callCompletion(expectedText: String, prefix: String?): Lookup
-  fun callRename(expectedName: String, offset: Int): Lookup
-  fun finishCompletion(expectedText: String, prefix: String): Boolean
-  fun finishRename(expectedText: String)
+  fun callFeature(expectedText: String, prefix: String?): Lookup
+  fun finishSession(expectedText: String, prefix: String): Boolean
   fun printText(text: String)
   fun deleteRange(begin: Int, end: Int)
   fun openFile(file: String): String

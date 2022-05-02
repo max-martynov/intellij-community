@@ -7,7 +7,7 @@ import com.intellij.cce.util.FileTextUtil.getDiff
 import java.nio.file.Paths
 import java.util.*
 
-class Interpreter(private val invoker: CompletionInvoker,
+class Interpreter(private val invoker: ActionsInvoker,
                   private val handler: InterpretationHandler,
                   private val filter: InterpretFilter,
                   private val saveContent: Boolean,
@@ -41,9 +41,9 @@ class Interpreter(private val invoker: CompletionInvoker,
           invoker.moveCaret(action.offset)
           position = action.offset
         }
-        is CallCompletion -> {
+        is CallFeature -> {
           isFinished = false
-          if (shouldCompleteToken && completionType != CompletionType.RENAME) {
+          if (shouldCompleteToken) {
             val lookup = invoker.callCompletion(action.expectedText, action.prefix)
             if (session == null)
               session = createSession(position, action.expectedText, action.nodeProperties, lookup)
@@ -51,7 +51,7 @@ class Interpreter(private val invoker: CompletionInvoker,
           }
         }
         is FinishSession -> {
-          if (shouldCompleteToken && completionType != CompletionType.RENAME) {
+          if (shouldCompleteToken) {
             if (session == null) throw UnexpectedActionException("Session canceled before created")
             val expectedText = session.expectedText
             isFinished = invoker.finishCompletion(expectedText, session.lookups.last().prefix)
@@ -81,27 +81,6 @@ class Interpreter(private val invoker: CompletionInvoker,
         is DeleteRange -> {
           if (!action.completable || !isFinished)
             invoker.deleteRange(action.begin, action.end)
-        }
-        is CallRename -> {
-          isFinished = false
-          if (completionType == CompletionType.RENAME) {
-            val lookup = invoker.callRename(action.name, action.offset)
-            if (session == null)
-              session = createSession(position, action.name, action.nodeProperties, lookup)
-            session.addLookup(lookup)
-          }
-        }
-        is FinishRename -> {
-          if (completionType == CompletionType.RENAME) {
-            if (session == null) throw UnexpectedActionException("Session canceled before created")
-            val expectedText = session.expectedText
-            invoker.finishRename(expectedText)
-            session.success = session.lookups.last().suggestions.any { it.text == expectedText }
-            sessions.add(session)
-            sessionHandler(session)
-            isCanceled = handler.onSessionFinished(fileActions.path)
-            session = null
-          }
         }
       }
       if (isCanceled) break

@@ -7,10 +7,11 @@ import com.intellij.psi.util.PsiTypesUtil
 import com.intellij.cce.core.*
 import com.intellij.cce.visitor.exceptions.PsiConverterException
 
-class JavaEvaluationVisitor : CompletionEvaluationVisitor, JavaRecursiveElementVisitor() {
+class JavaEvaluationVisitor : EvaluationVisitor, JavaRecursiveElementVisitor() {
   private var codeFragment: CodeFragment? = null
 
   override val language: Language = Language.JAVA
+  override val feature: String = "rename"
 
   override fun getFile(): CodeFragment = codeFragment
                                          ?: throw PsiConverterException("Invoke 'accept' with visitor on PSI first")

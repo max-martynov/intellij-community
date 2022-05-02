@@ -6,21 +6,19 @@ import java.lang.reflect.Type
 
 sealed class Action(val type: ActionType) {
   enum class ActionType {
-    MOVE_CARET, CALL_COMPLETION, FINISH_SESSION, PRINT_TEXT, DELETE_RANGE, EMULATE_USER_SESSION, CODE_GOLF, CALL_RENAME, FINISH_RENAME
+    MOVE_CARET, CALL_FEATURE, FINISH_SESSION, PRINT_TEXT, DELETE_RANGE, EMULATE_USER_SESSION, CODE_GOLF
   }
 
   object JsonAdapter : JsonDeserializer<Action>, JsonSerializer<Action> {
     override fun deserialize(json: JsonElement, typeOfT: Type, context: JsonDeserializationContext): Action {
       return when (ActionType.valueOf(json.asJsonObject.get("type").asString)) {
         ActionType.MOVE_CARET -> context.deserialize(json, MoveCaret::class.java)
-        ActionType.CALL_COMPLETION -> context.deserialize(json, CallCompletion::class.java)
+        ActionType.CALL_FEATURE -> context.deserialize(json, CallFeature::class.java)
         ActionType.FINISH_SESSION -> context.deserialize(json, FinishSession::class.java)
         ActionType.PRINT_TEXT -> context.deserialize(json, PrintText::class.java)
         ActionType.DELETE_RANGE -> context.deserialize(json, DeleteRange::class.java)
         ActionType.EMULATE_USER_SESSION -> context.deserialize(json, EmulateUserSession::class.java)
         ActionType.CODE_GOLF -> context.deserialize(json, CodeGolfSession::class.java)
-        ActionType.CALL_RENAME -> context.deserialize(json, CallRename::class.java)
-        ActionType.FINISH_RENAME -> context.deserialize(json, FinishRename::class.java)
       }
     }
 
@@ -33,11 +31,8 @@ sealed class Action(val type: ActionType) {
 data class FileActions(val path: String, val checksum: String, val sessionsCount: Int, val actions: List<Action>)
 
 data class MoveCaret(val offset: Int) : Action(ActionType.MOVE_CARET)
-data class CallCompletion(val prefix: String, val expectedText: String, val nodeProperties: TokenProperties) : Action(
-  ActionType.CALL_COMPLETION)
-data class CallRename(val name: String, val offset: Int, val nodeProperties: TokenProperties) : Action(
-  ActionType.CALL_RENAME)
-class FinishRename : Action(ActionType.FINISH_RENAME)
+data class CallFeature(val prefix: String, val expectedText: String, val nodeProperties: TokenProperties) : Action(
+  ActionType.CALL_FEATURE)
 
 
 class FinishSession : Action(ActionType.FINISH_SESSION)
