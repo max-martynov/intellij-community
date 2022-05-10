@@ -37,17 +37,17 @@ class DelegationActionsInvoker(private val invoker: ActionsInvoker, project: Pro
     invoker.deleteRange(begin, end)
   }
 
-  override fun emulateUserSession(expectedText: String, nodeProperties: TokenProperties, offset: Int): Session {
-    return readActionWaitingForSize {
-      invoker.emulateUserSession(expectedText, nodeProperties, offset)
-    }
-  }
-
-  override fun emulateCodeGolfSession(expectedLine: String, offset: Int, nodeProperties: TokenProperties): Session {
-    return readActionWaitingForSize {
-      invoker.emulateCodeGolfSession(expectedLine, offset, nodeProperties)
-    }
-  }
+  //override fun emulateUserSession(expectedText: String, nodeProperties: TokenProperties, offset: Int): Session {
+  //  return readActionWaitingForSize {
+  //    invoker.emulateUserSession(expectedText, nodeProperties, offset)
+  //  }
+  //}
+  //
+  //override fun emulateCodeGolfSession(expectedLine: String, offset: Int, nodeProperties: TokenProperties): Session {
+  //  return readActionWaitingForSize {
+  //    invoker.emulateCodeGolfSession(expectedLine, offset, nodeProperties)
+  //  }
+  //}
 
   override fun openFile(file: String): String = readAction {
     invoker.openFile(file)

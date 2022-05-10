@@ -2,6 +2,8 @@ package com.intellij.cce.actions
 
 import com.intellij.cce.EvaluationPluginBundle
 import com.intellij.cce.dialog.EvaluateHereSettingsDialog
+import com.intellij.cce.evaluable.EvaluableFeature
+import com.intellij.cce.evaluable.rename.RenameStrategy
 import com.intellij.cce.evaluation.BackgroundStepFactory
 import com.intellij.cce.evaluation.EvaluationProcess
 import com.intellij.cce.evaluation.EvaluationRootInfo
@@ -23,6 +25,8 @@ class EvaluateCompletionHereAction : AnAction() {
   }
 
   override fun actionPerformed(e: AnActionEvent) {
+    val feature = EvaluableFeature.forFeature("rename") ?:  return LOG.error("No support for this feature.")
+    val strategy = RenameStrategy()
     val project = e.project ?: return LOG.error("Project is null.")
     val caret = e.getData(CommonDataKeys.CARET) ?: return LOG.error("No value for key ${CommonDataKeys.CARET}.")
     val editor = e.getData(CommonDataKeys.EDITOR) ?: return LOG.error("No value for key ${CommonDataKeys.EDITOR}.")
@@ -47,7 +51,7 @@ class EvaluateCompletionHereAction : AnAction() {
                                             shouldGenerateActions = true
                                             shouldInterpretActions = true
                                             shouldHighlightInIde = true
-                                          }, BackgroundStepFactory(config, project, false, null,
+                                          }, BackgroundStepFactory(feature, strategy, config, project, false, null,
                                                                    EvaluationRootInfo(false, caret.offset, parentPsiElement)))
     process.startAsync(workspace)
   }

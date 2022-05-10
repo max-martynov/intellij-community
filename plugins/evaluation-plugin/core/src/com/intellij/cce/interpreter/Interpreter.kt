@@ -11,8 +11,7 @@ class Interpreter(private val invoker: ActionsInvoker,
                   private val handler: InterpretationHandler,
                   private val filter: InterpretFilter,
                   private val saveContent: Boolean,
-                  private val projectPath: String?,
-                  private val completionType: CompletionType) {
+                  private val projectPath: String?) {
   companion object {
     const val CCE_SESSION_UID = "sessionUid"
     private const val CCE_SESSION_UID_FEATURE_NAME = "ml_ctx_cce_$CCE_SESSION_UID"
@@ -63,17 +62,17 @@ class Interpreter(private val invoker: ActionsInvoker,
           session = null
           shouldCompleteToken = filter.shouldCompleteToken()
         }
-        is EmulateUserSession -> {
-          session = invoker.emulateUserSession(action.expectedText, action.nodeProperties, position)
-          if (session.lookups.isNotEmpty()) sessions.add(session)
-          sessionHandler(session)
-          isCanceled = handler.onSessionFinished(fileActions.path)
-        }
-        is CodeGolfSession -> {
-          session = invoker.emulateCodeGolfSession(action.expectedText, position, action.nodeProperties)
-          sessions.add(session)
-          isCanceled = handler.onSessionFinished(filePath)
-        }
+        //is EmulateUserSession -> {
+        //  session = invoker.emulateUserSession(action.expectedText, action.nodeProperties, position)
+        //  if (session.lookups.isNotEmpty()) sessions.add(session)
+        //  sessionHandler(session)
+        //  isCanceled = handler.onSessionFinished(fileActions.path)
+        //}
+        //is CodeGolfSession -> {
+        //  session = invoker.emulateCodeGolfSession(action.expectedText, position, action.nodeProperties)
+        //  sessions.add(session)
+        //  isCanceled = handler.onSessionFinished(filePath)
+        //}
         is PrintText -> {
           if (!action.completable || !isFinished)
             invoker.printText(action.text)

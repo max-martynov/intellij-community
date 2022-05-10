@@ -34,14 +34,13 @@ class ActionsGenerationStep(
 
   override fun runInBackground(workspace: EvaluationWorkspace, progress: Progress): EvaluationWorkspace {
     val filesForEvaluation = FilesHelper.getFilesOfLanguage(project, config.evaluationRoots, language)
-    generateActions(workspace, language, filesForEvaluation, config.strategy, evaluationRootInfo, progress)
+    generateActions(workspace, language, filesForEvaluation, evaluationRootInfo, progress)
     return workspace
   }
 
   private fun generateActions(workspace: EvaluationWorkspace, languageName: String, files: Collection<VirtualFile>,
-                              strategy: CompletionStrategy,
                               evaluationRootInfo: EvaluationRootInfo, indicator: Progress) {
-    val actionsGenerator = ActionsGenerator(strategy, generateActionsProcessor)
+    val actionsGenerator = ActionsGenerator(generateActionsProcessor)
     val codeFragmentBuilder = CodeFragmentBuilder.create(project, languageName)
 
     val errors = mutableListOf<FileErrorInfo>()

@@ -15,9 +15,9 @@ interface ActionsInvoker {
   fun isOpen(file: String): Boolean
   fun save()
   fun getText(): String
-  fun emulateUserSession(expectedText: String,
-                         nodeProperties: TokenProperties,
-                         offset: Int): Session
+  //fun emulateUserSession(expectedText: String,
+  //                       nodeProperties: TokenProperties,
+  //                       offset: Int): Session
 
-  fun emulateCodeGolfSession(expectedLine: String, offset: Int, nodeProperties: TokenProperties): Session
+  //fun emulateCodeGolfSession(expectedLine: String, offset: Int, nodeProperties: TokenProperties): Session
 }
