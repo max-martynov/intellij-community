@@ -1,11 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.cce.generalization.rename
+package com.intellij.cce.evaluable.rename
 
-import com.intellij.cce.actions.CodeGolfEmulation
-import com.intellij.cce.actions.CompletionType
-import com.intellij.cce.actions.UserEmulator
 import com.intellij.cce.core.*
-import com.intellij.cce.interpreter.BasicActionsInvoker
+import com.intellij.cce.evaluable.common.BasicActionsInvoker
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.completion.ml.actions.MLCompletionFeaturesUtil
@@ -18,13 +15,10 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.refactoring.actions.RenameElementAction
 import com.intellij.refactoring.rename.inplace.InplaceRefactoring
 
-class RenameActionsInvoker(
-  private val project: Project,
-  private val language: Language,
-  completionType: CompletionType,
-  userEmulationSettings: UserEmulator.Settings?,
-  private val codeGolfSettings: CodeGolfEmulation.Settings?) : BasicActionsInvoker(project, language, completionType,
-                                                                                   userEmulationSettings, codeGolfSettings) {
+class RenameActionsInvoker(private val project: Project,
+                           private val language: Language,
+                           private val strategy: RenameStrategy) : BasicActionsInvoker(project, language) {
+
   override fun callFeature(expectedText: String, prefix: String?): Lookup {
     LOG.info("Call rename. Expected text: $expectedText. ${positionToString(editor!!.caretModel.offset)}")
     //        assert(!dumbService.isDumb) { "Calling completion during indexing." }
