@@ -32,17 +32,17 @@ data class Config internal constructor(
 
   data class ActionsGeneration internal constructor(
     val evaluationRoots: List<String>,
-    val strategy: CompletionStrategy
+ //   val strategy: CompletionStrategy
   )
 
   data class ActionsInterpretation internal constructor(
-    val completionType: CompletionType,
+    //val completionType: CompletionType,
     val experimentGroup: Int?,
     val sessionsLimit: Int?,
     val completeTokenProbability: Double,
     val completeTokenSeed: Long?,
-    val emulationSettings: UserEmulator.Settings?,
-    val codeGolfSettings: CodeGolfEmulation.Settings?,
+  //  val emulationSettings: UserEmulator.Settings?,
+  //  val codeGolfSettings: CodeGolfEmulation.Settings?,
     val saveLogs: Boolean,
     val saveFeatures: Boolean,
     val saveContent: Boolean,
@@ -68,10 +68,10 @@ data class Config internal constructor(
     var saveContent = false
     var logLocationAndItemText = false
     var trainTestSplit: Int = 70
-    var completionType: CompletionType = CompletionType.BASIC
-    var evaluationTitle: String = completionType.name
-    var prefixStrategy: CompletionPrefix = CompletionPrefix.NoPrefix
-    var contextStrategy: CompletionContext = CompletionContext.ALL
+ //   var completionType: CompletionType = CompletionType.BASIC
+    var evaluationTitle: String = "BASIC"
+ //   var prefixStrategy: CompletionPrefix = CompletionPrefix.NoPrefix
+ //   var contextStrategy: CompletionContext = CompletionContext.ALL
     var experimentGroup: Int? = null
     var sessionsLimit: Int? = null
     var emulateUser: Boolean = false
@@ -90,25 +90,25 @@ data class Config internal constructor(
     constructor(config: Config) : this(config.projectPath, config.language) {
       outputDir = config.outputDir
       evaluationRoots.addAll(config.actions.evaluationRoots)
-      prefixStrategy = config.actions.strategy.prefix
-      contextStrategy = config.actions.strategy.context
-      emulateUser = config.actions.strategy.emulateUser
-      filters.putAll(config.actions.strategy.filters)
+   //   prefixStrategy = config.actions.strategy.prefix
+   //   contextStrategy = config.actions.strategy.context
+   //   emulateUser = config.actions.strategy.emulateUser
+   //   filters.putAll(config.actions.strategy.filters)
       saveLogs = config.interpret.saveLogs
       saveFeatures = config.interpret.saveFeatures
       saveContent = config.interpret.saveContent
       logLocationAndItemText = config.interpret.logLocationAndItemText
       trainTestSplit = config.interpret.trainTestSplit
-      completionType = config.interpret.completionType
+   //   completionType = config.interpret.completionType
       experimentGroup = config.interpret.experimentGroup
       sessionsLimit = config.interpret.sessionsLimit
-      emulationSettings = config.interpret.emulationSettings
+    //  emulationSettings = config.interpret.emulationSettings
       completeTokenProbability = config.interpret.completeTokenProbability
       completeTokenSeed = config.interpret.completeTokenSeed
       useReordering = config.reorder.useReordering
-      reorderingTitle = config.reorder.title
+    //  reorderingTitle = config.reorder.title
       featuresForReordering.addAll(config.reorder.features)
-      evaluationTitle = config.reports.evaluationTitle
+    //  evaluationTitle = config.reports.evaluationTitle
       mergeFilters(config.reports.sessionsFilters)
       mergeComparisonFilters(config.reports.comparisonFilters)
     }
@@ -131,16 +131,16 @@ data class Config internal constructor(
       outputDir,
       ActionsGeneration(
         evaluationRoots,
-        CompletionStrategy(prefixStrategy, contextStrategy, emulateUser, codeGolf, filters)
+     //   CompletionStrategy(prefixStrategy, contextStrategy, emulateUser, codeGolf, filters)
       ),
       ActionsInterpretation(
-        completionType,
+      //  completionType,
         experimentGroup,
         sessionsLimit,
         completeTokenProbability,
         completeTokenSeed,
-        emulationSettings,
-        codeGolfSettings,
+     //   emulationSettings,
+     //   codeGolfSettings,
         saveLogs,
         saveFeatures,
         saveContent,

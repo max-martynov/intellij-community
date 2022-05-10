@@ -20,7 +20,7 @@ object ConfigFactory {
   private val gson = GsonBuilder()
     .serializeNulls()
     .setPrettyPrinting()
-    .registerTypeAdapter(CompletionStrategy::class.java, CompletionStrategySerializer())
+    //.registerTypeAdapter(CompletionStrategy::class.java, CompletionStrategySerializer())
     .registerTypeAdapter(SessionsFilter::class.java, SessionFiltersSerializer())
     .create()
 
@@ -65,7 +65,7 @@ object ConfigFactory {
 
   private fun deserializeActionsInterpretation(map: Map<String, Any>?, builder: Config.Builder) {
     if (map == null) return
-    builder.completionType = CompletionType.valueOf(map.getAs("completionType"))
+    //builder.completionType = CompletionType.valueOf(map.getAs("completionType"))
     if (map.containsKey("experimentGroup"))
       builder.experimentGroup = map.getAs<Double?>("experimentGroup")?.toInt()
     if (map.containsKey("sessionsLimit"))
@@ -118,24 +118,24 @@ object ConfigFactory {
     fun deserialize(strategy: Map<String, Any>, language: String, builder: Config.Builder) {
       builder.emulateUser = if (strategy.containsKey("emulateUser")) strategy.getAs("emulateUser") else false
       builder.codeGolf = if (strategy.containsKey("codeGolf")) strategy.getAs("codeGolf") else false
-      builder.contextStrategy = CompletionContext.valueOf(strategy.getAs("context"))
+     // builder.contextStrategy = CompletionContext.valueOf(strategy.getAs("context"))
       if (strategy.containsKey("filters")) {
         builder.filters.putAll(readFilters(strategy, language))
       }
       if (!builder.emulateUser) {
-        builder.prefixStrategy = getPrefix(strategy)
+       // builder.prefixStrategy = getPrefix(strategy)
       }
     }
 
-    private fun getPrefix(strategy: Map<String, Any>): CompletionPrefix {
-      val prefix = strategy.getAs<Map<String, Any>>("prefix")
-      return when (prefix["name"]) {
-        "NoPrefix" -> CompletionPrefix.NoPrefix
-        "CapitalizePrefix" -> CompletionPrefix.CapitalizePrefix(prefix.getAs("emulateTyping"))
-        "SimplePrefix" -> CompletionPrefix.SimplePrefix(prefix.getAs("emulateTyping"), prefix.getAs<Double>("n").toInt())
-        else -> throw IllegalArgumentException("Unknown completion prefix")
-      }
-    }
+    //private fun getPrefix(strategy: Map<String, Any>): CompletionPrefix {
+    //  val prefix = strategy.getAs<Map<String, Any>>("prefix")
+    //  return when (prefix["name"]) {
+    //    "NoPrefix" -> CompletionPrefix.NoPrefix
+    //    "CapitalizePrefix" -> CompletionPrefix.CapitalizePrefix(prefix.getAs("emulateTyping"))
+    //    "SimplePrefix" -> CompletionPrefix.SimplePrefix(prefix.getAs("emulateTyping"), prefix.getAs<Double>("n").toInt())
+    //    else -> throw IllegalArgumentException("Unknown completion prefix")
+    //  }
+    //}
   }
 
   private fun Map<String, *>.handleEnv(key: String): String = StrSubstitutor.replaceSystemProperties(getAs(key))
@@ -164,7 +164,7 @@ object ConfigFactory {
   }
 
   private inline fun <reified T> Map<String, *>.getAs(key: String): T {
-    check(key in this.keys) { "$key not found. Existing keys: ${keys.toList()}" }
+     check(key in this.keys) { "$key not found. Existing keys: ${keys.toList()}" }
     val value = this.getValue(key)
     check(value is T) { "Unexpected type in config" }
     return value

@@ -1,30 +1,29 @@
 package com.intellij.cce.metric
 
-import com.intellij.cce.actions.CompletionStrategy
 import com.intellij.cce.core.Session
 
 class MetricsEvaluator private constructor(private val evaluationType: String) {
   companion object {
-    fun withDefaultMetrics(evaluationType: String, strategy: CompletionStrategy): MetricsEvaluator {
+    fun withDefaultMetrics(evaluationType: String): MetricsEvaluator {
       val evaluator = MetricsEvaluator(evaluationType)
-      evaluator.registerDefaultMetrics(strategy)
+      evaluator.registerDefaultMetrics()
       return evaluator
     }
   }
 
   private val metrics = mutableListOf<Metric>()
 
-  fun registerDefaultMetrics(strategy: CompletionStrategy) {
-    if (strategy.codeGolf) {
-      registerMetric(CodeGolfMovesSumMetric())
-      registerMetric(CodeGolfMovesCountNormalised())
-      registerMetric(CodeGolfPerfectLine())
-      registerMetric(MeanLatencyMetric())
-      registerMetric(MaxLatencyMetric())
-      registerMetric(SessionsCountMetric())
-
-      return
-    }
+  fun registerDefaultMetrics() {
+    //if (strategy.codeGolf) {
+    //  registerMetric(CodeGolfMovesSumMetric())
+    //  registerMetric(CodeGolfMovesCountNormalised())
+    //  registerMetric(CodeGolfPerfectLine())
+    //  registerMetric(MeanLatencyMetric())
+    //  registerMetric(MaxLatencyMetric())
+    //  registerMetric(SessionsCountMetric())
+    //
+    //  return
+    //}
 
     registerMetric(FoundAtMetric(1))
     registerMetric(FoundAtMetric(5))
