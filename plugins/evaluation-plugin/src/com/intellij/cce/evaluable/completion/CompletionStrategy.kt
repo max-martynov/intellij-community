@@ -7,7 +7,7 @@ import com.intellij.cce.filter.EvaluationFilter
 data class CompletionStrategy(val completionType: CompletionType,
                               val prefix: CompletionPrefix,
                               val context: CompletionContext,
-                              val filters: Map<String, EvaluationFilter>) : EvaluationStrategy()
+                              val filters: Map<String, EvaluationFilter>) : EvaluationStrategy
 
 sealed class CompletionPrefix(val emulateTyping: Boolean) {
   object NoPrefix : CompletionPrefix(false)

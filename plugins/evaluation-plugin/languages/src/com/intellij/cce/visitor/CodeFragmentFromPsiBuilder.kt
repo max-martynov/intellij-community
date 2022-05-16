@@ -14,7 +14,7 @@ import com.intellij.cce.core.CodeFragment
 import com.intellij.cce.util.FilesHelper
 import com.intellij.cce.util.text
 
-class CodeFragmentFromPsiBuilder(private val project: Project, val language: Language) : CodeFragmentBuilder() {
+class CodeFragmentFromPsiBuilder(private val project: Project, val language: Language, val featureName: String) : CodeFragmentBuilder() {
   private val dumbService: DumbService = DumbService.getInstance(project)
 
   private fun getVisitors(): List<EvaluationVisitor> = EvaluationVisitor.EP_NAME.extensions.toList()
@@ -25,7 +25,7 @@ class CodeFragmentFromPsiBuilder(private val project: Project, val language: Lan
     } ?: throw PsiConverterException("Cannot get PSI of file ${file.path}")
 
     val filePath = FilesHelper.getRelativeToProjectPath(project, file.path)
-    val visitors = getVisitors().filter { it.language == language }
+    val visitors = getVisitors().filter { it.language == language && it.feature == featureName }
     if (visitors.isEmpty()) throw IllegalStateException("No suitable visitors")
     if (visitors.size > 1) throw IllegalStateException("More than 1 suitable visitors")
     val fileTokens = getFileTokens(visitors.first(), psi)

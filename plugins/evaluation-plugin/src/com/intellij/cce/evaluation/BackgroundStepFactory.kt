@@ -13,7 +13,6 @@ import com.intellij.openapi.project.Project
 
 class BackgroundStepFactory(
   private val feature: EvaluableFeature<EvaluationStrategy>,
-  private val strategy: EvaluationStrategy,
   private val config: Config,
   private val project: Project,
   private val isHeadless: Boolean,
@@ -22,13 +21,14 @@ class BackgroundStepFactory(
 ) : StepFactory {
 
   private val actionsInvoker = DelegationActionsInvoker(
-    feature.getActionsInvoker(project, Language.resolve(config.language), strategy),
+    feature.getActionsInvoker(project, Language.resolve(config.language), config.strategy),
     project
   )
 
   override fun generateActionsStep(): EvaluationStep {
-    val generateActionsProcessor = feature.getGenerateActionsProcessor(strategy)
-    return ActionsGenerationStep(config.actions, config.language, evaluationRootInfo, project, isHeadless, generateActionsProcessor)
+    val generateActionsProcessor = feature.getGenerateActionsProcessor(config.strategy)
+    return ActionsGenerationStep(config.actions, config.language, evaluationRootInfo,
+                                 project, isHeadless, generateActionsProcessor, feature.name)
   }
 
   override fun interpretActionsStep(): EvaluationStep =
@@ -36,7 +36,8 @@ class BackgroundStepFactory(
 
   override fun generateReportStep(): EvaluationStep =
     ReportGenerationStep(inputWorkspacePaths?.map { EvaluationWorkspace.open(it) },
-                         config.reports.sessionsFilters, config.reports.comparisonFilters, project, isHeadless)
+                         config.reports.sessionsFilters, config.reports.comparisonFilters, project, isHeadless,
+                         { map: Map<String, Any> -> feature.buildStrategy(map) })
 
   override fun interpretActionsOnNewWorkspaceStep(): EvaluationStep =
     ActionsInterpretationOnNewWorkspaceStep(config, actionsInvoker, project, isHeadless)

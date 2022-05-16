@@ -26,7 +26,7 @@ class EvaluateCompletionHereAction : AnAction() {
 
   override fun actionPerformed(e: AnActionEvent) {
     val feature = EvaluableFeature.forFeature("rename") ?:  return LOG.error("No support for this feature.")
-    val strategy = RenameStrategy()
+    val strategyBuilder = { map: Map<String, Any> -> feature.buildStrategy(map) }
     val project = e.project ?: return LOG.error("Project is null.")
     val caret = e.getData(CommonDataKeys.CARET) ?: return LOG.error("No value for key ${CommonDataKeys.CARET}.")
     val editor = e.getData(CommonDataKeys.EDITOR) ?: return LOG.error("No value for key ${CommonDataKeys.EDITOR}.")
@@ -41,7 +41,7 @@ class EvaluateCompletionHereAction : AnAction() {
       return
     }
 
-    val settingsDialog = EvaluateHereSettingsDialog(project, language.displayName, file.path)
+    val settingsDialog = EvaluateHereSettingsDialog(project, language.displayName, file.path, strategyBuilder)
     val result = settingsDialog.showAndGet()
     if (!result) return
     val config = settingsDialog.buildConfig()
@@ -51,7 +51,7 @@ class EvaluateCompletionHereAction : AnAction() {
                                             shouldGenerateActions = true
                                             shouldInterpretActions = true
                                             shouldHighlightInIde = true
-                                          }, BackgroundStepFactory(feature, strategy, config, project, false, null,
+                                          }, BackgroundStepFactory(feature, config, project, false, null,
                                                                    EvaluationRootInfo(false, caret.offset, parentPsiElement)))
     process.startAsync(workspace)
   }

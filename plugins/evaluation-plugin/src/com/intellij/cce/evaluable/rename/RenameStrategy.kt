@@ -3,4 +3,5 @@ package com.intellij.cce.evaluable.rename
 
 import com.intellij.cce.evaluable.EvaluationStrategy
 
-class RenameStrategy : EvaluationStrategy()
+
+class RenameStrategy : EvaluationStrategy

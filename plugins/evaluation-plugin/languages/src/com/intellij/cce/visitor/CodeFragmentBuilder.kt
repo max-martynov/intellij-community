@@ -9,9 +9,12 @@ import com.intellij.cce.core.CodeFragment
 
 abstract class CodeFragmentBuilder {
   companion object {
-    fun create(project: Project, languageName: String): CodeFragmentBuilder {
+    fun create(project: Project, languageName: String, featureName: String): CodeFragmentBuilder {
       val language = Language.resolve(languageName)
-      return if (language == Language.ANOTHER) CodeFragmentFromTextBuilder() else CodeFragmentFromPsiBuilder(project, language)
+      return if (language == Language.ANOTHER)
+        CodeFragmentFromTextBuilder()
+      else
+        CodeFragmentFromPsiBuilder(project, language, featureName)
     }
   }
 

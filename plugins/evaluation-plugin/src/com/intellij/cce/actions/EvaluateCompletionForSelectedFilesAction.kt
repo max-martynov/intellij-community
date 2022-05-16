@@ -20,7 +20,7 @@ import com.intellij.openapi.vfs.VirtualFile
 class EvaluateCompletionForSelectedFilesAction : AnAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val feature = EvaluableFeature.forFeature("rename") ?: return
-    val strategy = RenameStrategy()
+    val strategyBuilder = { map: Map<String, Any> -> feature.buildStrategy(map) }
     val project = e.project ?: return
     val files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY)?.toList() ?: emptyList<VirtualFile>()
 
@@ -32,7 +32,7 @@ class EvaluateCompletionForSelectedFilesAction : AnAction() {
       return
     }
 
-    val dialog = FullSettingsDialog(project, files, language2files)
+    val dialog = FullSettingsDialog(project, files, language2files, strategyBuilder)
     val result = dialog.showAndGet()
     if (!result) return
 
@@ -42,7 +42,7 @@ class EvaluateCompletionForSelectedFilesAction : AnAction() {
                                             shouldGenerateActions = true
                                             shouldInterpretActions = true
                                             shouldGenerateReports = true
-                                          }, BackgroundStepFactory(feature, strategy, config, project, false, null, EvaluationRootInfo(true)))
+                                          }, BackgroundStepFactory(feature, config, project, false, null, EvaluationRootInfo(true)))
     process.startAsync(workspace)
   }
 

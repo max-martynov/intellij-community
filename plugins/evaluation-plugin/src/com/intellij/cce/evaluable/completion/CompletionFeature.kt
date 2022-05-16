@@ -20,4 +20,17 @@ class CompletionFeature : EvaluableFeature<CompletionStrategy> {
     return CompletionActionsInvoker(project, language, strategy)
   }
 
+  override fun buildStrategy(map: Map<String, Any>): CompletionStrategy? {
+    val completionType = CompletionType.valueOf(map.getAs("completionType"))
+    val context = CompletionContext.valueOf(map.getAs("context"))
+    return CompletionStrategy(completionType, CompletionPrefix.NoPrefix, context, mapOf())
+  }
+
+  private inline fun <reified T> Map<String, *>.getAs(key: String): T {
+    check(key in this.keys) { "$key not found. Existing keys: ${keys.toList()}" }
+    val value = this.getValue(key)
+    check(value is T) { "Unexpected type in config" }
+    return value
+  }
+
 }

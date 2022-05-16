@@ -20,4 +20,6 @@ class RenameFeature : EvaluableFeature<RenameStrategy> {
     return RenameActionsInvoker(project, language, strategy)
   }
 
+  override fun buildStrategy(map: Map<String, Any>): RenameStrategy? = RenameStrategy()
+
 }

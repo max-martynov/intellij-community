@@ -1,6 +1,7 @@
 package com.intellij.cce.dialog
 
 import com.intellij.cce.EvaluationPluginBundle
+import com.intellij.cce.evaluable.EvaluationStrategy
 import com.intellij.cce.workspace.Config
 import com.intellij.cce.workspace.ConfigFactory
 import com.intellij.ide.util.PropertiesComponent
@@ -14,7 +15,8 @@ import javax.swing.JPanel
 class EvaluateHereSettingsDialog(
   private val project: Project,
   private val language: String,
-  private val path: String
+  private val path: String,
+  private val strategyBuilder: (Map<String, Any>) -> EvaluationStrategy?
 ) : DialogWrapper(true) {
   companion object {
     const val configStateKey = "com.intellij.cce.config.evaluate_here"
@@ -42,7 +44,7 @@ class EvaluateHereSettingsDialog(
       val value = properties.getValue(configStateKey)
       val previousState = try {
         if (value == null) ConfigFactory.defaultConfig(project.basePath!!)
-        else ConfigFactory.deserialize(value)
+        else ConfigFactory.deserialize(value, strategyBuilder)
       }
       catch (e: Throwable) {
         ConfigFactory.defaultConfig(project.basePath!!)

@@ -26,7 +26,8 @@ class ActionsGenerationStep(
   private val evaluationRootInfo: EvaluationRootInfo,
   project: Project,
   isHeadless: Boolean,
-  private val generateActionsProcessor: GenerateActionsProcessor
+  private val generateActionsProcessor: GenerateActionsProcessor,
+  private val featureName: String
   ) : BackgroundEvaluationStep(project, isHeadless) {
   override val name: String = "Generating actions"
 
@@ -41,7 +42,7 @@ class ActionsGenerationStep(
   private fun generateActions(workspace: EvaluationWorkspace, languageName: String, files: Collection<VirtualFile>,
                               evaluationRootInfo: EvaluationRootInfo, indicator: Progress) {
     val actionsGenerator = ActionsGenerator(generateActionsProcessor)
-    val codeFragmentBuilder = CodeFragmentBuilder.create(project, languageName)
+    val codeFragmentBuilder = CodeFragmentBuilder.create(project, languageName, featureName)
 
     val errors = mutableListOf<FileErrorInfo>()
     var totalSessions = 0

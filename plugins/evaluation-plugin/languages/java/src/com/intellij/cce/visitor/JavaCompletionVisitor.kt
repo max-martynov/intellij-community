@@ -7,11 +7,11 @@ import com.intellij.psi.util.PsiTypesUtil
 import com.intellij.cce.core.*
 import com.intellij.cce.visitor.exceptions.PsiConverterException
 
-class JavaEvaluationVisitor : EvaluationVisitor, JavaRecursiveElementVisitor() {
+class JavaCompletionVisitor : EvaluationVisitor, JavaRecursiveElementVisitor() {
   private var codeFragment: CodeFragment? = null
 
   override val language: Language = Language.JAVA
-  override val feature: String = "rename"
+  override val feature: String = "completion"
 
   override fun getFile(): CodeFragment = codeFragment
                                          ?: throw PsiConverterException("Invoke 'accept' with visitor on PSI first")
@@ -45,14 +45,6 @@ class JavaEvaluationVisitor : EvaluationVisitor, JavaRecursiveElementVisitor() {
       val token = CodeToken(expression.text, expression.textOffset, expression.textLength, keywordProperties())
       codeFragment?.addChild(token)
     }
-  }
-
-  override fun visitVariable(variable: PsiVariable) {
-    variable.name?.let { variableName ->
-      val token = CodeToken(variableName, variable.textOffset, variableName.length, variableDeclarationProperties())
-      codeFragment?.addChild(token)
-    }
-    super.visitVariable(variable)
   }
 
   override fun visitPackageStatement(statement: PsiPackageStatement?) = Unit
@@ -93,10 +85,6 @@ class JavaEvaluationVisitor : EvaluationVisitor, JavaRecursiveElementVisitor() {
 
   private fun methodProperties(method: PsiMethod?): TokenProperties {
     return classMemberProperties(TypeProperty.METHOD_CALL, method)
-  }
-
-  private fun variableDeclarationProperties(): TokenProperties {
-    return properties(TypeProperty.VARIABLE_DECLARATION, SymbolLocation.PROJECT) {}
   }
 
   private fun constructorProperties(expression: PsiNewExpression): TokenProperties {

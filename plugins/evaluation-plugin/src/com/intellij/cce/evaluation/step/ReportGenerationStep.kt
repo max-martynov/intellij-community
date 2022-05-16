@@ -28,7 +28,8 @@ class ReportGenerationStep(
   filters: List<SessionsFilter>,
   comparisonFilters: List<CompareSessionsFilter>,
   project: Project,
-  isHeadless: Boolean) : BackgroundEvaluationStep(project, isHeadless) {
+  isHeadless: Boolean,
+  private val strategyBuilder: (Map<String, Any>) -> EvaluationStrategy?) : BackgroundEvaluationStep(project, isHeadless) {
   override val name: String = "Report generation"
 
   override val description: String = "Generation of HTML-report"
@@ -42,7 +43,7 @@ class ReportGenerationStep(
 
   override fun runInBackground(workspace: EvaluationWorkspace, progress: Progress): EvaluationWorkspace {
     val workspaces = inputWorkspaces ?: listOf(workspace)
-    val configs = workspaces.map { it.readConfig() }
+    val configs = workspaces.map { it.readConfig(strategyBuilder) }
     val evaluationTitles = configs.map { it.reports.evaluationTitle }
     val suggestionsComparators = configs.map { SuggestionsComparator.create(Language.resolve(it.language)) }
     val strategies = listOf<EvaluationStrategy>() //configs.map { it.actions.strategy }

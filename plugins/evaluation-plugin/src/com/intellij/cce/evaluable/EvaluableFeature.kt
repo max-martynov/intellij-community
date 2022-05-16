@@ -19,6 +19,8 @@ interface EvaluableFeature<T : EvaluationStrategy> {
 
   val name: String
 
+  fun buildStrategy(map: Map<String, Any>): T?
+
   fun getGenerateActionsProcessor(strategy: T) : GenerateActionsProcessor
 
   fun getActionsInvoker(project: Project, language: Language, strategy: T): ActionsInvoker

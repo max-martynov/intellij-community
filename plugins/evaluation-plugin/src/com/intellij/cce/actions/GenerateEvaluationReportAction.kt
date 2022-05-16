@@ -17,14 +17,14 @@ import com.intellij.openapi.vfs.VirtualFile
 class GenerateEvaluationReportAction : AnAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val feature = EvaluableFeature.forFeature("rename") ?: return
-    val strategy = RenameStrategy()
+    val strategyBuilder = { map: Map<String, Any> -> feature.buildStrategy(map) }
     val project = e.project ?: return
     val dirs = getFiles(e)
-    val config = dirs.map { EvaluationWorkspace.open(it.path) }.buildMultipleEvaluationsConfig()
+    val config = dirs.map { EvaluationWorkspace.open(it.path) }.buildMultipleEvaluationsConfig(strategyBuilder)
     val outputWorkspace = EvaluationWorkspace.create(config)
     val process = EvaluationProcess.build({
                                             shouldGenerateReports = true
-                                          }, BackgroundStepFactory(feature, strategy, config, project, false, dirs.map { it.path }, EvaluationRootInfo(true)))
+                                          }, BackgroundStepFactory(feature, config, project, false, dirs.map { it.path }, EvaluationRootInfo(true)))
     process.startAsync(outputWorkspace)
   }
 
