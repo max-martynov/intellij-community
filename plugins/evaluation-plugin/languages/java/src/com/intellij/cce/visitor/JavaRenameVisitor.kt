@@ -19,23 +19,29 @@ class JavaRenameVisitor : EvaluationVisitor, JavaRecursiveElementVisitor() {
   }
 
   override fun visitLocalVariable(variable: PsiLocalVariable) {
-    variable.name.let { variableName ->
-      val token = CodeToken(variableName, variable.textOffset, variableName.length, variableDeclarationProperties())
+    val token = createCodeToken(variable, TypeProperty.LOCAL_VARIABLE)
+    if (token != null)
       codeFragment?.addChild(token)
-    }
     super.visitLocalVariable(variable)
   }
 
-  override fun visitVariable(variable: PsiVariable) {
-    //variable.name?.let { variableName ->
-    //  val token = CodeToken(variableName, variable.textOffset, variableName.length, variableDeclarationProperties())
-    //  codeFragment?.addChild(token)
-    //}
-    //super.visitVariable(variable)
+  override fun visitField(field: PsiField) {
+    val token = createCodeToken(field, TypeProperty.FIELD)
+    if (token != null)
+      codeFragment?.addChild(token)
+    super.visitField(field)
   }
 
-  private fun variableDeclarationProperties(): TokenProperties {
-    return properties(TypeProperty.VARIABLE_DECLARATION, SymbolLocation.PROJECT) {}
+  override fun visitParameter(parameter: PsiParameter) {
+    val token = createCodeToken(parameter, TypeProperty.PARAMETER)
+    if (token != null)
+      codeFragment?.addChild(token)
+    super.visitParameter(parameter)
+  }
+
+  private fun createCodeToken(namedElement: PsiNamedElement, tokenType: TypeProperty): CodeToken? {
+    val name = namedElement.name ?: return null
+    return CodeToken(name, namedElement.textOffset, name.length, properties(tokenType, SymbolLocation.PROJECT) {})
   }
 
   private fun properties(tokenType: TypeProperty, location: SymbolLocation, init: JvmProperties.Builder.() -> Unit)

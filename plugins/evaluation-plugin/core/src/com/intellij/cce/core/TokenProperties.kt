@@ -123,9 +123,9 @@ enum class SymbolLocation {
 enum class TypeProperty {
   KEYWORD,
   VARIABLE,
-  VARIABLE_DECLARATION,
+  LOCAL_VARIABLE,
   LINE,
-
+  PARAMETER,
   // TODO: consider constructors separately
   TYPE_REFERENCE,
   METHOD_CALL,

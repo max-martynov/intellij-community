@@ -10,7 +10,8 @@ import com.intellij.cce.evaluable.EvaluationStrategy
 import com.intellij.cce.evaluable.StrategyBuilder
 import com.intellij.cce.filter.EvaluationFilter
 import com.intellij.cce.filter.EvaluationFilterManager
-import com.intellij.cce.workspace.Config
+import com.intellij.cce.util.getAs
+import com.intellij.cce.util.getIfExists
 import com.intellij.cce.workspace.filter.CompareSessionsFilter
 import com.intellij.cce.workspace.filter.SessionsFilter
 import org.apache.commons.lang.text.StrSubstitutor
@@ -52,11 +53,11 @@ object ConfigFactory {
     val languageName = map.getAs<String>("language")
     return Config.build(map.handleEnv("projectPath"), languageName) {
       outputDir = map.handleEnv("outputDir")
-      deserializeStrategy(map.getIfExists("strategy"), strategyBuilder, this)
+      deserializeStrategy(map.getIfExists("strategy"), strategyBuilder, languageName, this)
       deserializeActionsGeneration(map.getIfExists("actions"), languageName, this)
       deserializeActionsInterpretation(map.getIfExists("interpret"), this)
       deserializeReorderElements(map.getIfExists("reorder"), this)
-      deserializeReportGeneration(map.getIfExists("reports"), languageName, this)
+      //deserializeReportGeneration(map.getIfExists("reports"), languageName, this)
     }
   }
 
@@ -89,10 +90,11 @@ object ConfigFactory {
 
   private fun <T : EvaluationStrategy> deserializeStrategy(map: Map<String, Any>?,
                                                            strategyBuilder: StrategyBuilder<T>,
+                                                           language: String,
                                                            builder: Config.Builder) {
     if (map == null)
       throw IllegalArgumentException("No strategy found in config!")
-    builder.strategy = strategyBuilder.build(map)
+    builder.strategy = strategyBuilder.build(map, language)
   }
 
   private fun deserializeReorderElements(map: Map<String, Any>?, builder: Config.Builder) {
@@ -105,37 +107,37 @@ object ConfigFactory {
     }
   }
 
-  private fun deserializeReportGeneration(map: Map<String, Any>?, language: String, builder: Config.Builder) {
-    if (map == null) return
-    builder.evaluationTitle = map.handleEnv("evaluationTitle")
-    val filtersList = map.getAs<List<Map<String, Any>>>("sessionsFilters")
-    val filters = mutableListOf<SessionsFilter>()
-    filtersList.forEach {
-      val name = it.getAs<String>("name")
-      filters.add(SessionsFilter(name, readFilters(it, language)))
-    }
-    builder.mergeFilters(filters)
-    val comparisonFiltersList = map.getAs<List<Map<String, Any>>>("comparisonFilters")
-    val comparisonFilters = mutableListOf<CompareSessionsFilter>()
-    comparisonFiltersList.forEach {
-      comparisonFilters.add(CompareSessionsFilter.create(it.getAs("filterType"), it.getAs("name"), it.getAs("evaluationType")))
-    }
-    builder.mergeComparisonFilters(comparisonFilters)
-  }
+  //private fun deserializeReportGeneration(map: Map<String, Any>?, language: String, builder: Config.Builder) {
+  //  if (map == null) return
+  //  builder.evaluationTitle = map.handleEnv("evaluationTitle")
+  //  val filtersList = map.getAs<List<Map<String, Any>>>("sessionsFilters")
+  //  val filters = mutableListOf<SessionsFilter>()
+  //  filtersList.forEach {
+  //    val name = it.getAs<String>("name")
+  //    filters.add(SessionsFilter(name, readFilters(it, language)))
+  //  }
+  //  builder.mergeFilters(filters)
+  //  val comparisonFiltersList = map.getAs<List<Map<String, Any>>>("comparisonFilters")
+  //  val comparisonFilters = mutableListOf<CompareSessionsFilter>()
+  //  comparisonFiltersList.forEach {
+  //    comparisonFilters.add(CompareSessionsFilter.create(it.getAs("filterType"), it.getAs("name"), it.getAs("evaluationType")))
+  //  }
+  //  builder.mergeComparisonFilters(comparisonFilters)
+  //}
 
   private fun Map<String, *>.handleEnv(key: String): String = StrSubstitutor.replaceSystemProperties(getAs(key))
 
-  private fun readFilters(map: Map<String, Any>, language: String): MutableMap<String, EvaluationFilter> {
-    val evaluationFilters = mutableMapOf<String, EvaluationFilter>()
-    val filters = map.getAs<Map<String, Any>>("filters")
-    for ((id, description) in filters) {
-      val configuration = EvaluationFilterManager.getConfigurationById(id)
-                          ?: throw IllegalStateException("Unknown filter: $id")
-      assert(configuration.isLanguageSupported(language)) { "filter $id is not supported for this language" }
-      evaluationFilters[id] = configuration.buildFromJson(description)
-    }
-    return evaluationFilters
-  }
+  //private fun readFilters(map: Map<String, Any>, language: String): MutableMap<String, EvaluationFilter> {
+  //  val evaluationFilters = mutableMapOf<String, EvaluationFilter>()
+  //  val filters = map.getAs<Map<String, Any>>("filters")
+  //  for ((id, description) in filters) {
+  //    val configuration = EvaluationFilterManager.getConfigurationById(id)
+  //                        ?: throw IllegalStateException("Unknown filter: $id")
+  //    assert(configuration.isLanguageSupported(language)) { "filter $id is not supported for this language" }
+  //    evaluationFilters[id] = configuration.buildFromJson(description)
+  //  }
+  //  return evaluationFilters
+  //}
 
   private class SessionFiltersSerializer : JsonSerializer<SessionsFilter> {
     override fun serialize(src: SessionsFilter, typeOfSrc: Type, context: JsonSerializationContext): JsonObject {
@@ -146,19 +148,5 @@ object ConfigFactory {
       jsonObject.add("filters", filtersObject)
       return jsonObject
     }
-  }
-
-  private inline fun <reified T> Map<String, *>.getAs(key: String): T {
-    check(key in this.keys) { "$key not found. Existing keys: ${keys.toList()}" }
-    val value = this.getValue(key)
-    check(value is T) { "Unexpected type in config" }
-    return value
-  }
-
-  private inline fun <reified T> Map<String, *>.getIfExists(key: String): T? {
-    if (key !in this.keys) return null
-    val value = this.getValue(key)
-    check(value is T) { "Unexpected type in config" }
-    return value
   }
 }

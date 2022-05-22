@@ -2,8 +2,10 @@
 package com.intellij.cce.evaluable.rename
 
 import com.intellij.cce.evaluable.EvaluationStrategy
+import com.intellij.cce.filter.EvaluationFilter
 
 
 data class RenameStrategy(
-  val placeholderName: String
+  val placeholderName: String,
+  val filters: Map<String, EvaluationFilter>
 ) : EvaluationStrategy

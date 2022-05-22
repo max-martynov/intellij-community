@@ -2,12 +2,14 @@
 package com.intellij.cce.evaluable.rename
 
 import com.intellij.cce.evaluable.StrategyBuilder
-import com.intellij.cce.evaluable.StrategyBuilder.Companion.getOrThrow
+import com.intellij.cce.util.getIfExists
+import com.intellij.cce.util.getOrThrow
 
 
 class RenameStrategyBuilder : StrategyBuilder<RenameStrategy> {
-  override fun build(map: Map<String, Any>): RenameStrategy {
+  override fun build(map: Map<String, Any>, language: String): RenameStrategy {
     val placeholderName = map.getOrThrow<String>("placeholderName")
-    return RenameStrategy(placeholderName)
+    val filters = readFilters(map.getIfExists<Map<String, Any>>("filters"), language)
+    return RenameStrategy(placeholderName, filters)
   }
 }

@@ -18,7 +18,7 @@ class RenameGenerateActionsProcessor(
   }
 
   private fun processToken(token: CodeToken) {
-    if (token.properties.tokenType != TypeProperty.VARIABLE_DECLARATION)
+    if (!checkFilters(token))
       return
     addAction(DeleteRange(token.offset, token.offset + token.length))
     addAction(MoveCaret(token.offset))
@@ -28,5 +28,7 @@ class RenameGenerateActionsProcessor(
     addAction(DeleteRange(token.offset, token.offset + strategy.placeholderName.length, false))
     addAction(PrintText(token.text, false))
   }
+
+  private fun checkFilters(token: CodeToken) = strategy.filters.all { it.value.shouldEvaluate(token.properties) }
 
 }
