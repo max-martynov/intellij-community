@@ -17,10 +17,9 @@ import com.intellij.openapi.vfs.VirtualFile
 class GenerateEvaluationReportAction : AnAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val feature = EvaluableFeature.forFeature("rename") ?: return
-    val strategyBuilder = { map: Map<String, Any> -> feature.buildStrategy(map) }
     val project = e.project ?: return
     val dirs = getFiles(e)
-    val config = dirs.map { EvaluationWorkspace.open(it.path) }.buildMultipleEvaluationsConfig(strategyBuilder)
+    val config = dirs.map { EvaluationWorkspace.open(it.path) }.buildMultipleEvaluationsConfig(feature.getStrategyBuilder())
     val outputWorkspace = EvaluationWorkspace.create(config)
     val process = EvaluationProcess.build({
                                             shouldGenerateReports = true

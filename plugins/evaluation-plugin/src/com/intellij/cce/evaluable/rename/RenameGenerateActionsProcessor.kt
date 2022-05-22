@@ -7,7 +7,9 @@ import com.intellij.cce.core.CodeToken
 import com.intellij.cce.core.TypeProperty
 import com.intellij.cce.processor.GenerateActionsProcessor
 
-class RenameGenerateActionsProcessor : GenerateActionsProcessor() {
+class RenameGenerateActionsProcessor(
+  private val strategy: RenameStrategy
+) : GenerateActionsProcessor() {
 
   override fun process(code: CodeFragment) {
     for (token in code.getChildren()) {
@@ -20,11 +22,10 @@ class RenameGenerateActionsProcessor : GenerateActionsProcessor() {
       return
     addAction(DeleteRange(token.offset, token.offset + token.length))
     addAction(MoveCaret(token.offset))
-    val defaultName = "variable"
-    addAction(PrintText(defaultName, false))
+    addAction(PrintText(strategy.placeholderName, false))
     addAction(CallFeature("", token.text, token.offset, token.properties))
     addAction(FinishSession())
-    addAction(DeleteRange(token.offset, token.offset + defaultName.length, false))
+    addAction(DeleteRange(token.offset, token.offset + strategy.placeholderName.length, false))
     addAction(PrintText(token.text, false))
   }
 

@@ -3,6 +3,7 @@ package com.intellij.cce.evaluation.step
 
 import com.intellij.cce.core.Language
 import com.intellij.cce.evaluable.EvaluationStrategy
+import com.intellij.cce.evaluable.StrategyBuilder
 import com.intellij.cce.evaluation.FilteredSessionsStorage
 import com.intellij.cce.metric.MetricsEvaluator
 import com.intellij.cce.metric.SuggestionsComparator
@@ -23,13 +24,13 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import java.nio.file.Path
 
-class ReportGenerationStep(
+class ReportGenerationStep<T : EvaluationStrategy>(
   private val inputWorkspaces: List<EvaluationWorkspace>?,
   filters: List<SessionsFilter>,
   comparisonFilters: List<CompareSessionsFilter>,
   project: Project,
   isHeadless: Boolean,
-  private val strategyBuilder: (Map<String, Any>) -> EvaluationStrategy?) : BackgroundEvaluationStep(project, isHeadless) {
+  private val strategyBuilder: StrategyBuilder<T>) : BackgroundEvaluationStep(project, isHeadless) {
   override val name: String = "Report generation"
 
   override val description: String = "Generation of HTML-report"

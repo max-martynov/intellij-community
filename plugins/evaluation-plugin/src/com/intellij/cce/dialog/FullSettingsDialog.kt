@@ -2,6 +2,7 @@ package com.intellij.cce.dialog
 
 import com.intellij.cce.EvaluationPluginBundle
 import com.intellij.cce.evaluable.EvaluationStrategy
+import com.intellij.cce.evaluable.StrategyBuilder
 import com.intellij.cce.util.FilesHelper
 import com.intellij.cce.workspace.Config
 import com.intellij.cce.workspace.ConfigFactory
@@ -14,11 +15,11 @@ import com.intellij.util.EventDispatcher
 import java.awt.event.ActionEvent
 import javax.swing.*
 
-class FullSettingsDialog(
+class FullSettingsDialog<T : EvaluationStrategy>(
   private val project: Project,
   private val files: List<VirtualFile>,
   language2files: Map<String, Set<VirtualFile>>,
-  private val strategyBuilder: (Map<String, Any>) -> EvaluationStrategy?
+  private val strategyBuilder: StrategyBuilder<T>
 ) : DialogWrapper(true) {
   companion object {
     const val configStateKey = "com.intellij.cce.config.full"

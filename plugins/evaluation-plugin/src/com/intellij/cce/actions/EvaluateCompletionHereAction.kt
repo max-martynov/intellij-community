@@ -26,7 +26,6 @@ class EvaluateCompletionHereAction : AnAction() {
 
   override fun actionPerformed(e: AnActionEvent) {
     val feature = EvaluableFeature.forFeature("rename") ?:  return LOG.error("No support for this feature.")
-    val strategyBuilder = { map: Map<String, Any> -> feature.buildStrategy(map) }
     val project = e.project ?: return LOG.error("Project is null.")
     val caret = e.getData(CommonDataKeys.CARET) ?: return LOG.error("No value for key ${CommonDataKeys.CARET}.")
     val editor = e.getData(CommonDataKeys.EDITOR) ?: return LOG.error("No value for key ${CommonDataKeys.EDITOR}.")
@@ -41,7 +40,7 @@ class EvaluateCompletionHereAction : AnAction() {
       return
     }
 
-    val settingsDialog = EvaluateHereSettingsDialog(project, language.displayName, file.path, strategyBuilder)
+    val settingsDialog = EvaluateHereSettingsDialog(project, language.displayName, file.path, feature.getStrategyBuilder())
     val result = settingsDialog.showAndGet()
     if (!result) return
     val config = settingsDialog.buildConfig()

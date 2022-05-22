@@ -37,7 +37,7 @@ class BackgroundStepFactory(
   override fun generateReportStep(): EvaluationStep =
     ReportGenerationStep(inputWorkspacePaths?.map { EvaluationWorkspace.open(it) },
                          config.reports.sessionsFilters, config.reports.comparisonFilters, project, isHeadless,
-                         { map: Map<String, Any> -> feature.buildStrategy(map) })
+                         feature.getStrategyBuilder())
 
   override fun interpretActionsOnNewWorkspaceStep(): EvaluationStep =
     ActionsInterpretationOnNewWorkspaceStep(config, actionsInvoker, project, isHeadless)

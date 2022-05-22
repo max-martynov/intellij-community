@@ -6,7 +6,6 @@ import com.intellij.cce.evaluable.common.BasicActionsInvoker
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.completion.ml.actions.MLCompletionFeaturesUtil
-import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataContext
@@ -30,11 +29,11 @@ class RenameActionsInvoker(private val project: Project,
 
     val start = System.currentTimeMillis()
 
-    val dataContext = buildDataContext(editor, offset)
-    if (dataContext != null) {
-      val anActionEvent = AnActionEvent(null, dataContext, "", Presentation(), ActionManager.getInstance(), 0)
-      RenameElementAction().actionPerformed(anActionEvent)
-    }
+    val openedEditor = editor ?: throw IllegalStateException("No open editor")
+    val dataContext = buildDataContext(openedEditor, offset)
+    val anActionEvent = AnActionEvent(null, dataContext, "", Presentation(), ActionManager.getInstance(), 0)
+    RenameElementAction().actionPerformed(anActionEvent)
+
     val activeLookup = LookupManager.getActiveLookup(editor)
     var suggestions = listOf<Suggestion>()
     var resultFeatures = Features.EMPTY
@@ -51,9 +50,7 @@ class RenameActionsInvoker(private val project: Project,
     return com.intellij.cce.core.Lookup.fromExpectedText(expectedText, "", suggestions, latency, resultFeatures)
   }
 
-  private fun buildDataContext(editor: Editor?, offset: Int): DataContext? {
-    if (editor == null)
-      return null
+  private fun buildDataContext(editor: Editor, offset: Int): DataContext {
     val docManager = PsiDocumentManager.getInstance(project)
     docManager.commitAllDocuments()
     val psiFile = docManager.getPsiFile(editor.document)

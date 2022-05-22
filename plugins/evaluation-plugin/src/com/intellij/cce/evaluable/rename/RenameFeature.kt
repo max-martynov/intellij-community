@@ -4,6 +4,7 @@ package com.intellij.cce.evaluable.rename
 
 import com.intellij.cce.core.Language
 import com.intellij.cce.evaluable.EvaluableFeature
+import com.intellij.cce.evaluable.StrategyBuilder
 import com.intellij.cce.interpreter.ActionsInvoker
 import com.intellij.cce.processor.GenerateActionsProcessor
 import com.intellij.openapi.project.Project
@@ -13,13 +14,15 @@ class RenameFeature : EvaluableFeature<RenameStrategy> {
   override val name = "rename"
 
   override fun getGenerateActionsProcessor(strategy: RenameStrategy): GenerateActionsProcessor {
-    return RenameGenerateActionsProcessor()
+    return RenameGenerateActionsProcessor(strategy)
   }
 
   override fun getActionsInvoker(project: Project, language: Language, strategy: RenameStrategy): ActionsInvoker {
     return RenameActionsInvoker(project, language, strategy)
   }
 
-  override fun buildStrategy(map: Map<String, Any>): RenameStrategy? = RenameStrategy()
+  override fun getStrategyBuilder(): StrategyBuilder<RenameStrategy> {
+    return RenameStrategyBuilder()
+  }
 
 }

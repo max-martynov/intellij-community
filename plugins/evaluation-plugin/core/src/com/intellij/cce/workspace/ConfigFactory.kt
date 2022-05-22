@@ -7,6 +7,7 @@ import com.google.gson.JsonSerializationContext
 import com.google.gson.JsonSerializer
 import com.intellij.cce.actions.*
 import com.intellij.cce.evaluable.EvaluationStrategy
+import com.intellij.cce.evaluable.StrategyBuilder
 import com.intellij.cce.filter.EvaluationFilter
 import com.intellij.cce.filter.EvaluationFilterManager
 import com.intellij.cce.workspace.Config
@@ -29,7 +30,7 @@ object ConfigFactory {
   fun defaultConfig(projectPath: String = "", language: String = "Java"): Config =
     Config.build(projectPath, language) {}
 
-  fun load(path: Path, strategyBuilder: (Map<String, Any>) -> EvaluationStrategy?): Config {
+  fun <T : EvaluationStrategy> load(path: Path, strategyBuilder: StrategyBuilder<T>): Config {
     val configFile = path.toFile()
     if (!configFile.exists()) {
       save(defaultConfig(), path.parent, configFile.name)
@@ -46,7 +47,7 @@ object ConfigFactory {
 
   fun serialize(config: Config): String = gson.toJson(config)
 
-  fun deserialize(json: String, strategyBuilder: (Map<String, Any>) -> EvaluationStrategy?): Config {
+  fun <T : EvaluationStrategy> deserialize(json: String, strategyBuilder: StrategyBuilder<T>): Config {
     val map = gson.fromJson(json, HashMap<String, Any>().javaClass)
     val languageName = map.getAs<String>("language")
     return Config.build(map.handleEnv("projectPath"), languageName) {
@@ -86,9 +87,12 @@ object ConfigFactory {
     builder.trainTestSplit = map.getAs<Double>("trainTestSplit").toInt()
   }
 
-  private fun deserializeStrategy(map: Map<String, Any>?, strategyBuilder: (Map<String, Any>) -> EvaluationStrategy?, builder: Config.Builder) {
-    if (map != null)
-      builder.strategy = strategyBuilder(map) ?: return
+  private fun <T : EvaluationStrategy> deserializeStrategy(map: Map<String, Any>?,
+                                                           strategyBuilder: StrategyBuilder<T>,
+                                                           builder: Config.Builder) {
+    if (map == null)
+      throw IllegalArgumentException("No strategy found in config!")
+    builder.strategy = strategyBuilder.build(map)
   }
 
   private fun deserializeReorderElements(map: Map<String, Any>?, builder: Config.Builder) {

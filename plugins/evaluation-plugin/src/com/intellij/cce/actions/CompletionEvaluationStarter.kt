@@ -10,6 +10,7 @@ import com.github.ajalt.clikt.parameters.options.flag
 import com.github.ajalt.clikt.parameters.options.option
 import com.intellij.cce.evaluable.EvaluableFeature
 import com.intellij.cce.evaluable.EvaluationStrategy
+import com.intellij.cce.evaluable.StrategyBuilder
 import com.intellij.cce.evaluation.BackgroundStepFactory
 import com.intellij.cce.evaluation.EvaluationProcess
 import com.intellij.cce.evaluation.EvaluationRootInfo
@@ -28,7 +29,7 @@ import java.nio.file.Paths
 import kotlin.system.exitProcess
 
 internal class CompletionEvaluationStarter : ApplicationStarter {
-  override fun getCommandName(): String = "evaluate-completion"
+  override fun getCommandName(): String = "evaluate"
   override fun isHeadless(): Boolean = true
 
   override fun main(args: Array<String>) =
@@ -41,7 +42,7 @@ internal class CompletionEvaluationStarter : ApplicationStarter {
 
     protected val featureName by argument(name = "Feature name").default("rename")
 
-    protected fun loadConfig(configPath: Path, strategyBuilder: (Map<String, Any>) -> EvaluationStrategy?) = try {
+    protected fun<T : EvaluationStrategy> loadConfig(configPath: Path, strategyBuilder: StrategyBuilder<T>) = try {
       ConfigFactory.load(configPath, strategyBuilder)
     }
     catch (e: Exception) {
@@ -94,7 +95,7 @@ internal class CompletionEvaluationStarter : ApplicationStarter {
 
     override fun run() {
       val feature = EvaluableFeature.forFeature(featureName) ?: throw Exception("No support for the feature")
-      val config = loadConfig(Paths.get(configPath)) { map: Map<String, Any> -> feature.buildStrategy(map) }
+      val config = loadConfig(Paths.get(configPath), feature.getStrategyBuilder())
       val project = loadProject(config.projectPath)
       val workspace = EvaluationWorkspace.create(config)
       val stepFactory = BackgroundStepFactory(feature, config, project, true, null, EvaluationRootInfo(true))
@@ -133,7 +134,7 @@ internal class CompletionEvaluationStarter : ApplicationStarter {
     override fun run() {
       val feature = EvaluableFeature.forFeature(featureName) ?: throw Exception("No support for the feature")
       val workspace = EvaluationWorkspace.open(workspacePath)
-      val config = workspace.readConfig() { map: Map<String, Any> -> feature.buildStrategy(map) }
+      val config = workspace.readConfig(feature.getStrategyBuilder())
       val project = loadProject(config.projectPath)
       val process = EvaluationProcess.build({
                                               shouldGenerateActions = false
@@ -152,8 +153,7 @@ internal class CompletionEvaluationStarter : ApplicationStarter {
     override fun run() {
       val workspacesToCompare = getWorkspaces()
       val feature = EvaluableFeature.forFeature(featureName) ?: throw Exception("No support for the feature")
-      val strategyBuilder = { map: Map<String, Any> -> feature.buildStrategy(map) }
-      val config = workspacesToCompare.map { EvaluationWorkspace.open(it) }.buildMultipleEvaluationsConfig(strategyBuilder)
+      val config = workspacesToCompare.map { EvaluationWorkspace.open(it) }.buildMultipleEvaluationsConfig(feature.getStrategyBuilder())
       val outputWorkspace = EvaluationWorkspace.create(config)
       val project = loadProject(config.projectPath)
       val process = EvaluationProcess.build({

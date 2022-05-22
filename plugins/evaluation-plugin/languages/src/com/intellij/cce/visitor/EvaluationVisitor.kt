@@ -11,7 +11,6 @@ interface EvaluationVisitor {
 
   val language: Language
   val feature: String
-    get() = "null"
 
   fun getFile(): CodeFragment
 }
