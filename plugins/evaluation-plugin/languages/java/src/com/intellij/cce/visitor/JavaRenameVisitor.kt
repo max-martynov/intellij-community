@@ -18,12 +18,20 @@ class JavaRenameVisitor : EvaluationVisitor, JavaRecursiveElementVisitor() {
     super.visitJavaFile(file)
   }
 
-  override fun visitVariable(variable: PsiVariable) {
-    variable.name?.let { variableName ->
+  override fun visitLocalVariable(variable: PsiLocalVariable) {
+    variable.name.let { variableName ->
       val token = CodeToken(variableName, variable.textOffset, variableName.length, variableDeclarationProperties())
       codeFragment?.addChild(token)
     }
-    super.visitVariable(variable)
+    super.visitLocalVariable(variable)
+  }
+
+  override fun visitVariable(variable: PsiVariable) {
+    //variable.name?.let { variableName ->
+    //  val token = CodeToken(variableName, variable.textOffset, variableName.length, variableDeclarationProperties())
+    //  codeFragment?.addChild(token)
+    //}
+    //super.visitVariable(variable)
   }
 
   private fun variableDeclarationProperties(): TokenProperties {
