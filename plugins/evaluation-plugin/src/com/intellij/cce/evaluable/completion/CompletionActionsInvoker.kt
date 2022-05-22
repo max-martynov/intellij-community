@@ -24,7 +24,7 @@ class CompletionActionsInvoker(private val project: Project,
     else -> com.intellij.codeInsight.completion.CompletionType.BASIC
   }
 
-  override fun callFeature(expectedText: String, prefix: String?): Lookup {
+  override fun callFeature(expectedText: String, prefix: String?, offset: Int): Lookup {
         LOG.info("Call completion. Type: $completionType. ${positionToString(editor!!.caretModel.offset)}")
     //        assert(!dumbService.isDumb) { "Calling completion during indexing." }
 

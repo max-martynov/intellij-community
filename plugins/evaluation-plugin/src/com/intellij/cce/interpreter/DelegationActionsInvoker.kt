@@ -16,9 +16,9 @@ class DelegationActionsInvoker(private val invoker: ActionsInvoker, project: Pro
     invoker.moveCaret(offset)
   }
 
-  override fun callFeature(expectedText: String, prefix: String?): Lookup {
+  override fun callFeature(expectedText: String, prefix: String?, offset: Int): Lookup {
     return readActionWaitingForSize {
-      invoker.callFeature(expectedText, prefix)
+      invoker.callFeature(expectedText, prefix, offset)
     }
   }
 

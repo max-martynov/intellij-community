@@ -43,7 +43,7 @@ class Interpreter(private val invoker: ActionsInvoker,
         is CallFeature -> {
           isFinished = false
           if (shouldCompleteToken) {
-            val lookup = invoker.callFeature(action.expectedText, action.prefix)
+            val lookup = invoker.callFeature(action.expectedText, action.prefix, action.offset)
             if (session == null)
               session = createSession(position, action.expectedText, action.nodeProperties, lookup)
             session.addLookup(lookup)

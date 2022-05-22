@@ -63,13 +63,13 @@ class CompletionGenerateActionsProcessor(private val strategy: CompletionStrateg
       var currentPrefix = ""
       if (prefixCreator.completePrevious) {
         for (symbol in prefix) {
-          addAction(CallFeature(currentPrefix, token.text, token.properties))
+          addAction(CallFeature(currentPrefix, token.text, token.offset, token.properties))
           addAction(PrintText(symbol.toString(), false))
           currentPrefix += symbol
         }
       }
       else if (prefix.isNotEmpty()) addAction(PrintText(prefix, false))
-      addAction(CallFeature(prefix, token.text, token.properties))
+      addAction(CallFeature(prefix, token.text, token.offset, token.properties))
       addAction(FinishSession())
 
       if (prefix.isNotEmpty())

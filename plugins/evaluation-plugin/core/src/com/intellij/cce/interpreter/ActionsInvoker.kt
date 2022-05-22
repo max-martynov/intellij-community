@@ -6,7 +6,7 @@ import com.intellij.cce.core.TokenProperties
 
 interface ActionsInvoker {
   fun moveCaret(offset: Int)
-  fun callFeature(expectedText: String, prefix: String?): Lookup
+  fun callFeature(expectedText: String, prefix: String?, offset: Int): Lookup
   fun finishSession(expectedText: String, prefix: String): Boolean
   fun printText(text: String)
   fun deleteRange(begin: Int, end: Int)

@@ -31,7 +31,7 @@ sealed class Action(val type: ActionType) {
 data class FileActions(val path: String, val checksum: String, val sessionsCount: Int, val actions: List<Action>)
 
 data class MoveCaret(val offset: Int) : Action(ActionType.MOVE_CARET)
-data class CallFeature(val prefix: String, val expectedText: String, val nodeProperties: TokenProperties) : Action(
+data class CallFeature(val prefix: String, val expectedText: String, val offset: Int, val nodeProperties: TokenProperties) : Action(
   ActionType.CALL_FEATURE)
 
 

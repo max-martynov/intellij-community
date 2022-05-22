@@ -22,7 +22,7 @@ class RenameGenerateActionsProcessor : GenerateActionsProcessor() {
     addAction(MoveCaret(token.offset))
     val defaultName = "variable"
     addAction(PrintText(defaultName, false))
-    addAction(CallFeature("", token.text, token.properties))
+    addAction(CallFeature("", token.text, token.offset, token.properties))
     addAction(FinishSession())
     addAction(DeleteRange(token.offset, token.offset + defaultName.length, false))
     addAction(PrintText(token.text, false))
