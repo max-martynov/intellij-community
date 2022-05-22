@@ -5,6 +5,9 @@ import com.intellij.cce.core.JvmProperties
 import com.intellij.cce.core.PropertyAdapters
 import com.intellij.cce.core.SymbolLocation
 import com.intellij.cce.core.TokenProperties
+import com.intellij.cce.evaluable.EvaluableFeature
+import com.intellij.cce.evaluable.EvaluationStrategy
+import com.intellij.cce.evaluable.ProcessorsProvider
 import com.intellij.cce.evaluation.EvaluationRootInfo
 import com.intellij.cce.processor.DefaultEvaluationRootProcessor
 import com.intellij.cce.processor.EvaluationRootByRangeProcessor
@@ -26,7 +29,7 @@ class ActionsGenerationStep(
   private val evaluationRootInfo: EvaluationRootInfo,
   project: Project,
   isHeadless: Boolean,
-  private val generateActionsProcessor: GenerateActionsProcessor,
+  private val processorsProvider: ProcessorsProvider,
   private val featureName: String
   ) : BackgroundEvaluationStep(project, isHeadless) {
   override val name: String = "Generating actions"
@@ -41,7 +44,7 @@ class ActionsGenerationStep(
 
   private fun generateActions(workspace: EvaluationWorkspace, languageName: String, files: Collection<VirtualFile>,
                               evaluationRootInfo: EvaluationRootInfo, indicator: Progress) {
-    val actionsGenerator = ActionsGenerator(generateActionsProcessor)
+    val actionsGenerator = ActionsGenerator()
     val codeFragmentBuilder = CodeFragmentBuilder.create(project, languageName, featureName)
 
     val errors = mutableListOf<FileErrorInfo>()
@@ -65,7 +68,7 @@ class ActionsGenerationStep(
           else -> throw IllegalStateException("Parent psi and offset are null.")
         }
         val codeFragment = codeFragmentBuilder.build(file, rootVisitor)
-        val fileActions = actionsGenerator.generate(codeFragment)
+        val fileActions = actionsGenerator.generate(processorsProvider.getProcessor(), codeFragment)
         actionsSummarizer.update(fileActions)
         workspace.actionsStorage.saveActions(fileActions)
         totalSessions += fileActions.sessionsCount
