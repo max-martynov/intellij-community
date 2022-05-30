@@ -24,7 +24,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import java.nio.file.Path
 
-class ReportGenerationStep<T : EvaluationStrategy>(
+class ReportGenerationStep<T : EvaluationStrategy>  (
   private val inputWorkspaces: List<EvaluationWorkspace>?,
   filters: List<SessionsFilter>,
   comparisonFilters: List<CompareSessionsFilter>,

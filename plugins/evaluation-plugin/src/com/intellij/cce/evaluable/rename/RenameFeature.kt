@@ -24,5 +24,4 @@ class RenameFeature : EvaluableFeature<RenameStrategy> {
   override fun getStrategyBuilder(): StrategyBuilder<RenameStrategy> {
     return RenameStrategyBuilder()
   }
-
 }

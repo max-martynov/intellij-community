@@ -1,21 +1,20 @@
 package com.intellij.cce.actions
 
 import com.intellij.cce.core.CodeFragment
-import com.intellij.cce.evaluable.EvaluationStrategy
 import com.intellij.cce.processor.DeleteScopesProcessor
 import com.intellij.cce.processor.GenerateActionsProcessor
 import com.intellij.cce.util.FileTextUtil.computeChecksum
 
-class ActionsGenerator {
+class ActionsGenerator(val processor: GenerateActionsProcessor) {
 
-  fun generate(generateActionsProcessor: GenerateActionsProcessor, code: CodeFragment): FileActions {
+  fun generate(code: CodeFragment): FileActions {
     val deletionVisitor = DeleteScopesProcessor()
 //    if (strategy.context == CompletionContext.PREVIOUS) deletionVisitor.process(code)
 
-    generateActionsProcessor.process(code)
-
+    processor.clear()
+    processor.process(code)
     val actions: MutableList<Action> = mutableListOf()
-    val completionActions = generateActionsProcessor.getActions()
+    val completionActions = processor.getActions()
     if (completionActions.isNotEmpty()) {
       actions.addAll(deletionVisitor.getActions().reversed())
       actions.addAll(completionActions)

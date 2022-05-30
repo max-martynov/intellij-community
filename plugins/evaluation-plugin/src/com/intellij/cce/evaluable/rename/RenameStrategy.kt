@@ -7,5 +7,5 @@ import com.intellij.cce.filter.EvaluationFilter
 
 data class RenameStrategy(
   val placeholderName: String,
-  val filters: Map<String, EvaluationFilter>
+  override val filters: Map<String, EvaluationFilter>
 ) : EvaluationStrategy

@@ -4,10 +4,8 @@ import com.intellij.cce.core.Language
 import com.intellij.cce.evaluation.step.*
 import com.intellij.cce.evaluable.EvaluableFeature
 import com.intellij.cce.evaluable.EvaluationStrategy
-import com.intellij.cce.evaluable.ProcessorsProvider
 import com.intellij.cce.interpreter.DelegationActionsInvoker
 import com.intellij.cce.metric.SuggestionsComparator
-import com.intellij.cce.processor.GenerateActionsProcessor
 import com.intellij.cce.workspace.Config
 import com.intellij.cce.workspace.EvaluationWorkspace
 import com.intellij.openapi.application.ApplicationManager
@@ -28,13 +26,9 @@ class BackgroundStepFactory(
   )
 
   override fun generateActionsStep(): EvaluationStep {
-    val processorsProvider = object : ProcessorsProvider {
-      override fun getProcessor(): GenerateActionsProcessor {
-        return feature.getGenerateActionsProcessor(config.strategy)
-      }
-    }
     return ActionsGenerationStep(config.actions, config.language, evaluationRootInfo,
-                                 project, isHeadless, processorsProvider, feature.name)
+                                 project, isHeadless,
+                                 feature.getGenerateActionsProcessor(config.strategy), feature.name)
   }
 
   override fun interpretActionsStep(): EvaluationStep =
