@@ -1,13 +1,11 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.cce.workspace
 
-import com.google.gson.GsonBuilder
-import com.google.gson.JsonObject
-import com.google.gson.JsonSerializationContext
-import com.google.gson.JsonSerializer
+import com.google.gson.*
 import com.intellij.cce.actions.*
 import com.intellij.cce.evaluable.EvaluationStrategy
 import com.intellij.cce.evaluable.StrategyBuilder
+import com.intellij.cce.evaluable.StrategySerializer
 import com.intellij.cce.filter.EvaluationFilter
 import com.intellij.cce.filter.EvaluationFilterManager
 import com.intellij.cce.util.getAs
@@ -22,16 +20,20 @@ import java.nio.file.Path
 object ConfigFactory {
   const val DEFAULT_CONFIG_NAME = "config.json"
 
-  private val gson = GsonBuilder()
-    .serializeNulls()
-    .setPrettyPrinting()
-    .registerTypeAdapter(SessionsFilter::class.java, SessionFiltersSerializer())
-    .create()
+  private lateinit var gson: Gson
 
   fun defaultConfig(projectPath: String = "", language: String = "Java"): Config =
     Config.build(projectPath, language) {}
 
-  fun <T : EvaluationStrategy> load(path: Path, strategyBuilder: StrategyBuilder<T>): Config {
+  fun <T : EvaluationStrategy> load(path: Path, strategyBuilder: StrategyBuilder<T>,
+                                    strategySerializer: StrategySerializer<T>): Config {
+    gson = GsonBuilder()
+      .serializeNulls()
+      .setPrettyPrinting()
+      .registerTypeAdapter(SessionsFilter::class.java,
+                           SessionFiltersSerializer())
+      .registerTypeAdapter(EvaluationStrategy::class.java, strategySerializer)
+      .create()
     val configFile = path.toFile()
     if (!configFile.exists()) {
       save(defaultConfig(), path.parent, configFile.name)

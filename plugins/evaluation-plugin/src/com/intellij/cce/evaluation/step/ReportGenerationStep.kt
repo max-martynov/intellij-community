@@ -4,6 +4,8 @@ package com.intellij.cce.evaluation.step
 import com.intellij.cce.core.Language
 import com.intellij.cce.evaluable.EvaluationStrategy
 import com.intellij.cce.evaluable.StrategyBuilder
+import com.intellij.cce.evaluable.StrategySerializer
+import com.intellij.cce.evaluable.rename.RenameStrategySerializer
 import com.intellij.cce.evaluation.FilteredSessionsStorage
 import com.intellij.cce.metric.MetricsEvaluator
 import com.intellij.cce.metric.SuggestionsComparator
@@ -30,7 +32,9 @@ class ReportGenerationStep<T : EvaluationStrategy>  (
   comparisonFilters: List<CompareSessionsFilter>,
   project: Project,
   isHeadless: Boolean,
-  private val strategyBuilder: StrategyBuilder<T>) : BackgroundEvaluationStep(project, isHeadless) {
+  private val strategyBuilder: StrategyBuilder<T>,
+  private val strategySerializer: StrategySerializer<T>
+  ) : BackgroundEvaluationStep(project, isHeadless) {
   override val name: String = "Report generation"
 
   override val description: String = "Generation of HTML-report"
@@ -44,7 +48,7 @@ class ReportGenerationStep<T : EvaluationStrategy>  (
 
   override fun runInBackground(workspace: EvaluationWorkspace, progress: Progress): EvaluationWorkspace {
     val workspaces = inputWorkspaces ?: listOf(workspace)
-    val configs = workspaces.map { it.readConfig(strategyBuilder) }
+    val configs = workspaces.map { it.readConfig(strategyBuilder, strategySerializer) }
     val evaluationTitles = configs.map { it.reports.evaluationTitle }
     val suggestionsComparators = configs.map { SuggestionsComparator.create(Language.resolve(it.language)) }
     val strategies = listOf<EvaluationStrategy>() //configs.map { it.actions.strategy }

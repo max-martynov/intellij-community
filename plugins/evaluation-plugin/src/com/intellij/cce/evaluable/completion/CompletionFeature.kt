@@ -4,6 +4,7 @@ package com.intellij.cce.evaluable.completion
 import com.intellij.cce.core.Language
 import com.intellij.cce.evaluable.EvaluableFeature
 import com.intellij.cce.evaluable.StrategyBuilder
+import com.intellij.cce.evaluable.StrategySerializer
 import com.intellij.cce.interpreter.ActionsInvoker
 import com.intellij.cce.processor.GenerateActionsProcessor
 import com.intellij.openapi.project.Project
@@ -30,6 +31,10 @@ class CompletionFeature : EvaluableFeature<CompletionStrategy> {
 
   override fun getStrategyBuilder(): StrategyBuilder<CompletionStrategy> {
     return CompletionStrategyBuilder()
+  }
+
+  override fun getStrategySerializer(): StrategySerializer<CompletionStrategy> {
+    TODO("Not yet implemented")
   }
 
 }

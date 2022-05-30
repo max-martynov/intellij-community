@@ -21,6 +21,8 @@ interface EvaluableFeature<T : EvaluationStrategy> {
 
   fun getStrategyBuilder(): StrategyBuilder<T>
 
+  fun getStrategySerializer(): StrategySerializer<T>
+
   fun getGenerateActionsProcessor(strategy: T) : GenerateActionsProcessor
 
   fun getActionsInvoker(project: Project, language: Language, strategy: T): ActionsInvoker

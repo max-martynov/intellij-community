@@ -1,0 +1,18 @@
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.cce.evaluable.rename
+
+import com.google.gson.JsonObject
+import com.google.gson.JsonSerializationContext
+import com.intellij.cce.evaluable.StrategySerializer
+import java.lang.reflect.Type
+
+class RenameStrategySerializer : StrategySerializer<RenameStrategy> {
+  override fun serialize(src: RenameStrategy, typeOfSrc: Type, context: JsonSerializationContext): JsonObject {
+    val jsonObject = JsonObject()
+    jsonObject.addProperty("placeholderName", src.placeholderName)
+    val filtersObject = JsonObject()
+    src.filters.forEach { id, filter -> filtersObject.add(id, filter.toJson()) }
+    jsonObject.add("filters", filtersObject)
+    return jsonObject
+  }
+}

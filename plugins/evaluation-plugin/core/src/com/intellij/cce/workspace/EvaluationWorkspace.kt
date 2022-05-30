@@ -3,6 +3,7 @@ package com.intellij.cce.workspace
 import com.google.gson.Gson
 import com.intellij.cce.evaluable.EvaluationStrategy
 import com.intellij.cce.evaluable.StrategyBuilder
+import com.intellij.cce.evaluable.StrategySerializer
 import com.intellij.cce.workspace.storages.*
 import java.io.FileWriter
 import java.nio.file.Files
@@ -53,8 +54,8 @@ class EvaluationWorkspace private constructor(private val basePath: Path) {
 
   fun path(): Path = basePath
 
-  fun<T : EvaluationStrategy> readConfig(strategyBuilder: StrategyBuilder<T>): Config =
-    ConfigFactory.load(pathToConfig, strategyBuilder)
+  fun<T : EvaluationStrategy> readConfig(strategyBuilder: StrategyBuilder<T>, strategySerializer: StrategySerializer<T>): Config =
+    ConfigFactory.load(pathToConfig, strategyBuilder, strategySerializer)
 
   fun saveAdditionalStats(name: String, stats: Map<String, Any>) {
     FileWriter(basePath.resolve("$name.json").toString()).use { it.write(gson.toJson(stats)) }

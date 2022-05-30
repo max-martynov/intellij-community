@@ -19,7 +19,7 @@ class GenerateEvaluationReportAction : AnAction() {
     val feature = EvaluableFeature.forFeature("rename") ?: return
     val project = e.project ?: return
     val dirs = getFiles(e)
-    val config = dirs.map { EvaluationWorkspace.open(it.path) }.buildMultipleEvaluationsConfig(feature.getStrategyBuilder())
+    val config = dirs.map { EvaluationWorkspace.open(it.path) }.buildMultipleEvaluationsConfig(feature.getStrategyBuilder(), feature.getStrategySerializer())
     val outputWorkspace = EvaluationWorkspace.create(config)
     val process = EvaluationProcess.build({
                                             shouldGenerateReports = true
