@@ -31,7 +31,7 @@ class EvaluateCompletionForSelectedFilesAction : AnAction() {
       return
     }
 
-    val dialog = FullSettingsDialog(project, files, language2files, feature.getStrategyBuilder())
+    val dialog = FullSettingsDialog(project, files, language2files, feature.getStrategySerializer())
     val result = dialog.showAndGet()
     if (!result) return
 

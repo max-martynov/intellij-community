@@ -4,10 +4,10 @@ package com.intellij.cce.workspace
 import com.google.gson.*
 import com.intellij.cce.actions.*
 import com.intellij.cce.evaluable.EvaluationStrategy
-import com.intellij.cce.evaluable.StrategyBuilder
 import com.intellij.cce.evaluable.StrategySerializer
 import com.intellij.cce.filter.EvaluationFilter
 import com.intellij.cce.filter.EvaluationFilterManager
+import com.intellij.cce.filter.EvaluationFilterReader
 import com.intellij.cce.util.getAs
 import com.intellij.cce.util.getIfExists
 import com.intellij.cce.workspace.filter.CompareSessionsFilter
@@ -25,8 +25,7 @@ object ConfigFactory {
   fun defaultConfig(projectPath: String = "", language: String = "Java"): Config =
     Config.build(projectPath, language) {}
 
-  fun <T : EvaluationStrategy> load(path: Path, strategyBuilder: StrategyBuilder<T>,
-                                    strategySerializer: StrategySerializer<T>): Config {
+  fun <T : EvaluationStrategy> load(path: Path, strategySerializer: StrategySerializer<T>): Config {
     gson = GsonBuilder()
       .serializeNulls()
       .setPrettyPrinting()
@@ -40,7 +39,7 @@ object ConfigFactory {
       throw IllegalArgumentException("Config file missing. Config created by path: ${configFile.absolutePath}. Fill settings in config.")
     }
 
-    return deserialize(configFile.readText(), strategyBuilder)
+    return deserialize(configFile.readText(), strategySerializer)
   }
 
   fun save(config: Config, directory: Path, name: String = DEFAULT_CONFIG_NAME) {
@@ -50,16 +49,16 @@ object ConfigFactory {
 
   fun serialize(config: Config): String = gson.toJson(config)
 
-  fun <T : EvaluationStrategy> deserialize(json: String, strategyBuilder: StrategyBuilder<T>): Config {
+  fun <T : EvaluationStrategy> deserialize(json: String, strategySerializer: StrategySerializer<T>): Config {
     val map = gson.fromJson(json, HashMap<String, Any>().javaClass)
     val languageName = map.getAs<String>("language")
     return Config.build(map.handleEnv("projectPath"), languageName) {
       outputDir = map.handleEnv("outputDir")
-      deserializeStrategy(map.getIfExists("strategy"), strategyBuilder, languageName, this)
+      deserializeStrategy(map.getIfExists("strategy"), strategySerializer, languageName, this)
       deserializeActionsGeneration(map.getIfExists("actions"), languageName, this)
       deserializeActionsInterpretation(map.getIfExists("interpret"), this)
       deserializeReorderElements(map.getIfExists("reorder"), this)
-      //deserializeReportGeneration(map.getIfExists("reports"), languageName, this)
+      deserializeReportGeneration(map.getIfExists("reports"), languageName, this)
     }
   }
 
@@ -91,12 +90,12 @@ object ConfigFactory {
   }
 
   private fun <T : EvaluationStrategy> deserializeStrategy(map: Map<String, Any>?,
-                                                           strategyBuilder: StrategyBuilder<T>,
+                                                           strategySerializer: StrategySerializer<T>,
                                                            language: String,
                                                            builder: Config.Builder) {
     if (map == null)
       throw IllegalArgumentException("No strategy found in config!")
-    builder.strategy = strategyBuilder.build(map, language)
+    builder.strategy = strategySerializer.deserialize(map, language)
   }
 
   private fun deserializeReorderElements(map: Map<String, Any>?, builder: Config.Builder) {
@@ -109,37 +108,25 @@ object ConfigFactory {
     }
   }
 
-  //private fun deserializeReportGeneration(map: Map<String, Any>?, language: String, builder: Config.Builder) {
-  //  if (map == null) return
-  //  builder.evaluationTitle = map.handleEnv("evaluationTitle")
-  //  val filtersList = map.getAs<List<Map<String, Any>>>("sessionsFilters")
-  //  val filters = mutableListOf<SessionsFilter>()
-  //  filtersList.forEach {
-  //    val name = it.getAs<String>("name")
-  //    filters.add(SessionsFilter(name, readFilters(it, language)))
-  //  }
-  //  builder.mergeFilters(filters)
-  //  val comparisonFiltersList = map.getAs<List<Map<String, Any>>>("comparisonFilters")
-  //  val comparisonFilters = mutableListOf<CompareSessionsFilter>()
-  //  comparisonFiltersList.forEach {
-  //    comparisonFilters.add(CompareSessionsFilter.create(it.getAs("filterType"), it.getAs("name"), it.getAs("evaluationType")))
-  //  }
-  //  builder.mergeComparisonFilters(comparisonFilters)
-  //}
+  private fun deserializeReportGeneration(map: Map<String, Any>?, language: String, builder: Config.Builder) {
+    if (map == null) return
+    builder.evaluationTitle = map.handleEnv("evaluationTitle")
+    val filtersList = map.getAs<List<Map<String, Any>>>("sessionsFilters")
+    val filters = mutableListOf<SessionsFilter>()
+    filtersList.forEach {
+      val name = it.getAs<String>("name")
+      filters.add(SessionsFilter(name, EvaluationFilterReader.readFilters(it, language)))
+    }
+    builder.mergeFilters(filters)
+    val comparisonFiltersList = map.getAs<List<Map<String, Any>>>("comparisonFilters")
+    val comparisonFilters = mutableListOf<CompareSessionsFilter>()
+    comparisonFiltersList.forEach {
+      comparisonFilters.add(CompareSessionsFilter.create(it.getAs("filterType"), it.getAs("name"), it.getAs("evaluationType")))
+    }
+    builder.mergeComparisonFilters(comparisonFilters)
+  }
 
   private fun Map<String, *>.handleEnv(key: String): String = StrSubstitutor.replaceSystemProperties(getAs(key))
-
-  //private fun readFilters(map: Map<String, Any>, language: String): MutableMap<String, EvaluationFilter> {
-  //  val evaluationFilters = mutableMapOf<String, EvaluationFilter>()
-  //  val filters = map.getAs<Map<String, Any>>("filters")
-  //  for ((id, description) in filters) {
-  //    val configuration = EvaluationFilterManager.getConfigurationById(id)
-  //                        ?: throw IllegalStateException("Unknown filter: $id")
-  //    assert(configuration.isLanguageSupported(language)) { "filter $id is not supported for this language" }
-  //    evaluationFilters[id] = configuration.buildFromJson(description)
-  //  }
-  //  return evaluationFilters
-  //}
 
   private class SessionFiltersSerializer : JsonSerializer<SessionsFilter> {
     override fun serialize(src: SessionsFilter, typeOfSrc: Type, context: JsonSerializationContext): JsonObject {

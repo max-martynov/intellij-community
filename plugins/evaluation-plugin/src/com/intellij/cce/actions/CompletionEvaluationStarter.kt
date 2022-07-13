@@ -11,7 +11,6 @@ import com.github.ajalt.clikt.parameters.options.option
 import com.google.gson.GsonBuilder
 import com.intellij.cce.evaluable.EvaluableFeature
 import com.intellij.cce.evaluable.EvaluationStrategy
-import com.intellij.cce.evaluable.StrategyBuilder
 import com.intellij.cce.evaluable.StrategySerializer
 import com.intellij.cce.evaluation.BackgroundStepFactory
 import com.intellij.cce.evaluation.EvaluationProcess
@@ -45,8 +44,8 @@ internal class CompletionEvaluationStarter : ApplicationStarter {
 
     protected val featureName by argument(name = "Feature name").default("rename")
 
-    protected fun<T : EvaluationStrategy> loadConfig(configPath: Path, strategyBuilder: StrategyBuilder<T>, strategySerializer: StrategySerializer<T>) = try {
-      ConfigFactory.load(configPath, strategyBuilder, strategySerializer)
+    protected fun<T : EvaluationStrategy> loadConfig(configPath: Path, strategySerializer: StrategySerializer<T>) = try {
+      ConfigFactory.load(configPath, strategySerializer)
     }
     catch (e: Exception) {
       fatalError("Error for loading config: $configPath, $e. StackTrace: ${stackTraceToString(e)}")
@@ -98,7 +97,7 @@ internal class CompletionEvaluationStarter : ApplicationStarter {
 
     override fun run() {
       val feature = EvaluableFeature.forFeature(featureName) ?: throw Exception("No support for the feature")
-      val config = loadConfig(Paths.get(configPath), feature.getStrategyBuilder(), feature.getStrategySerializer())
+      val config = loadConfig(Paths.get(configPath), feature.getStrategySerializer())
       val project = loadProject(config.projectPath)
       val workspace = EvaluationWorkspace.create(config)
       val stepFactory = BackgroundStepFactory(feature, config, project, true, null, EvaluationRootInfo(true))
@@ -137,7 +136,7 @@ internal class CompletionEvaluationStarter : ApplicationStarter {
     override fun run() {
       val feature = EvaluableFeature.forFeature(featureName) ?: throw Exception("No support for the feature")
       val workspace = EvaluationWorkspace.open(workspacePath)
-      val config = workspace.readConfig(feature.getStrategyBuilder(), feature.getStrategySerializer())
+      val config = workspace.readConfig(feature.getStrategySerializer())
       val project = loadProject(config.projectPath)
       val process = EvaluationProcess.build({
                                               shouldGenerateActions = false
@@ -156,7 +155,7 @@ internal class CompletionEvaluationStarter : ApplicationStarter {
     override fun run() {
       val workspacesToCompare = getWorkspaces()
       val feature = EvaluableFeature.forFeature(featureName) ?: throw Exception("No support for the feature")
-      val config = workspacesToCompare.map { EvaluationWorkspace.open(it) }.buildMultipleEvaluationsConfig(feature.getStrategyBuilder(), feature.getStrategySerializer())
+      val config = workspacesToCompare.map { EvaluationWorkspace.open(it) }.buildMultipleEvaluationsConfig(feature.getStrategySerializer())
       val outputWorkspace = EvaluationWorkspace.create(config)
       val project = loadProject(config.projectPath)
       val process = EvaluationProcess.build({

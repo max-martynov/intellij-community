@@ -3,7 +3,6 @@ package com.intellij.cce.evaluable.completion
 
 import com.intellij.cce.core.Language
 import com.intellij.cce.evaluable.EvaluableFeature
-import com.intellij.cce.evaluable.StrategyBuilder
 import com.intellij.cce.evaluable.StrategySerializer
 import com.intellij.cce.interpreter.ActionsInvoker
 import com.intellij.cce.processor.GenerateActionsProcessor
@@ -27,10 +26,6 @@ class CompletionFeature : EvaluableFeature<CompletionStrategy> {
     val value = this.getValue(key)
     check(value is T) { "Unexpected type in config" }
     return value
-  }
-
-  override fun getStrategyBuilder(): StrategyBuilder<CompletionStrategy> {
-    return CompletionStrategyBuilder()
   }
 
   override fun getStrategySerializer(): StrategySerializer<CompletionStrategy> {

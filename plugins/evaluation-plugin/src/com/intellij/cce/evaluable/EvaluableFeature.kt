@@ -19,8 +19,6 @@ interface EvaluableFeature<T : EvaluationStrategy> {
 
   val name: String
 
-  fun getStrategyBuilder(): StrategyBuilder<T>
-
   fun getStrategySerializer(): StrategySerializer<T>
 
   fun getGenerateActionsProcessor(strategy: T) : GenerateActionsProcessor

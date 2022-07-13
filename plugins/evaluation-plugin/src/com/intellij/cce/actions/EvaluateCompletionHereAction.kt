@@ -40,7 +40,7 @@ class EvaluateCompletionHereAction : AnAction() {
       return
     }
 
-    val settingsDialog = EvaluateHereSettingsDialog(project, language.displayName, file.path, feature.getStrategyBuilder())
+    val settingsDialog = EvaluateHereSettingsDialog(project, language.displayName, file.path, feature.getStrategySerializer())
     val result = settingsDialog.showAndGet()
     if (!result) return
     val config = settingsDialog.buildConfig()
