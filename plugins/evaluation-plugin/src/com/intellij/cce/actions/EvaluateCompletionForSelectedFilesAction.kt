@@ -3,7 +3,6 @@ package com.intellij.cce.actions
 import com.intellij.cce.EvaluationPluginBundle
 import com.intellij.cce.dialog.FullSettingsDialog
 import com.intellij.cce.evaluable.EvaluableFeature
-import com.intellij.cce.evaluable.rename.RenameStrategy
 import com.intellij.cce.evaluation.BackgroundStepFactory
 import com.intellij.cce.evaluation.EvaluationProcess
 import com.intellij.cce.evaluation.EvaluationRootInfo
