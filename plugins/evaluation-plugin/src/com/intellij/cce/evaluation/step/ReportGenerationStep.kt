@@ -1,7 +1,9 @@
 package com.intellij.cce.evaluation.step
 
-import com.intellij.cce.actions.CompletionStrategy
+
 import com.intellij.cce.core.Language
+import com.intellij.cce.evaluable.EvaluationStrategy
+import com.intellij.cce.evaluable.StrategySerializer
 import com.intellij.cce.evaluation.FilteredSessionsStorage
 import com.intellij.cce.metric.MetricsEvaluator
 import com.intellij.cce.metric.SuggestionsComparator
@@ -22,12 +24,14 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import java.nio.file.Path
 
-class ReportGenerationStep(
+class ReportGenerationStep<T : EvaluationStrategy>  (
   private val inputWorkspaces: List<EvaluationWorkspace>?,
   filters: List<SessionsFilter>,
   comparisonFilters: List<CompareSessionsFilter>,
   project: Project,
-  isHeadless: Boolean) : BackgroundEvaluationStep(project, isHeadless) {
+  isHeadless: Boolean,
+  private val strategySerializer: StrategySerializer<T>
+  ) : BackgroundEvaluationStep(project, isHeadless) {
   override val name: String = "Report generation"
 
   override val description: String = "Generation of HTML-report"
@@ -41,13 +45,13 @@ class ReportGenerationStep(
 
   override fun runInBackground(workspace: EvaluationWorkspace, progress: Progress): EvaluationWorkspace {
     val workspaces = inputWorkspaces ?: listOf(workspace)
-    val configs = workspaces.map { it.readConfig() }
+    val configs = workspaces.map { it.readConfig(strategySerializer) }
     val evaluationTitles = configs.map { it.reports.evaluationTitle }
-    val suggestionsComparators = configs.map { SuggestionsComparator.create(Language.resolve(it.language), it.interpret.completionType) }
-    val strategies = configs.map { it.actions.strategy }
+    val suggestionsComparators = configs.map { SuggestionsComparator.create(Language.resolve(it.language)) }
+    val strategies = listOf<EvaluationStrategy>() //configs.map { it.actions.strategy }
     val featuresStorages = workspaces.map { it.featuresStorage }
     val iterationsCount = sessionsFilters.size * comparisonStorages.size
-    val isCodeGolfEvaluation = strategies.map { it.codeGolf }.allEquals()
+    val isCodeGolfEvaluation = false
     var iteration = 0
     for (filter in sessionsFilters) {
       val sessionStorages = workspaces.map { FilteredSessionsStorage(filter, it.sessionsStorage) }
@@ -113,9 +117,9 @@ class ReportGenerationStep(
                              evaluationTitles: List<String>,
                              suggestionsComparators: List<SuggestionsComparator>,
                              comparisonStorage: CompareSessionsStorage,
-                             strategies: List<CompletionStrategy>): List<ReportInfo> {
+                             strategies: List<EvaluationStrategy>): List<ReportInfo> {
     val title2evaluator = evaluationTitles.mapIndexed { index, title ->
-      title to MetricsEvaluator.withDefaultMetrics(title, strategies[index])
+      title to MetricsEvaluator.withDefaultMetrics(title)
     }.toMap()
     for (sessionFile in sessionFiles.filter { it.value.size == sessionStorages.size }) {
       val fileEvaluations = mutableListOf<FileEvaluationInfo>()

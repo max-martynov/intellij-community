@@ -1,6 +1,7 @@
 package com.intellij.cce.workspace
 
 import com.intellij.cce.actions.*
+import com.intellij.cce.evaluable.EvaluationStrategy
 import com.intellij.cce.filter.EvaluationFilter
 import com.intellij.cce.workspace.filter.CompareSessionsFilter
 import com.intellij.cce.workspace.filter.NamedFilter
@@ -11,6 +12,7 @@ data class Config internal constructor(
   val projectPath: String,
   val language: String,
   val outputDir: String,
+  val strategy: EvaluationStrategy,
   val actions: ActionsGeneration,
   val interpret: ActionsInterpretation,
   val reorder: ReorderElements,
@@ -31,17 +33,14 @@ data class Config internal constructor(
   }
 
   data class ActionsGeneration internal constructor(
-    val evaluationRoots: List<String>,
-    val strategy: CompletionStrategy)
+    val evaluationRoots: List<String>
+  )
 
   data class ActionsInterpretation internal constructor(
-    val completionType: CompletionType,
     val experimentGroup: Int?,
     val sessionsLimit: Int?,
     val completeTokenProbability: Double,
     val completeTokenSeed: Long?,
-    val emulationSettings: UserEmulator.Settings?,
-    val codeGolfSettings: CodeGolfEmulation.Settings?,
     val saveLogs: Boolean,
     val saveFeatures: Boolean,
     val saveContent: Boolean,
@@ -62,15 +61,13 @@ data class Config internal constructor(
   class Builder internal constructor(private val projectPath: String, private val language: String) {
     var evaluationRoots = mutableListOf<String>()
     var outputDir: String = Paths.get(projectPath, "completion-evaluation").toAbsolutePath().toString()
+    var strategy: EvaluationStrategy = EvaluationStrategy.defaultStrategy
     var saveLogs = false
     var saveFeatures = true
     var saveContent = false
     var logLocationAndItemText = false
     var trainTestSplit: Int = 70
-    var completionType: CompletionType = CompletionType.BASIC
-    var evaluationTitle: String = completionType.name
-    var prefixStrategy: CompletionPrefix = CompletionPrefix.NoPrefix
-    var contextStrategy: CompletionContext = CompletionContext.ALL
+    var evaluationTitle: String = "BASIC"
     var experimentGroup: Int? = null
     var sessionsLimit: Int? = null
     var emulateUser: Boolean = false
@@ -88,20 +85,15 @@ data class Config internal constructor(
 
     constructor(config: Config) : this(config.projectPath, config.language) {
       outputDir = config.outputDir
+      strategy = config.strategy
       evaluationRoots.addAll(config.actions.evaluationRoots)
-      prefixStrategy = config.actions.strategy.prefix
-      contextStrategy = config.actions.strategy.context
-      emulateUser = config.actions.strategy.emulateUser
-      filters.putAll(config.actions.strategy.filters)
       saveLogs = config.interpret.saveLogs
       saveFeatures = config.interpret.saveFeatures
       saveContent = config.interpret.saveContent
       logLocationAndItemText = config.interpret.logLocationAndItemText
       trainTestSplit = config.interpret.trainTestSplit
-      completionType = config.interpret.completionType
       experimentGroup = config.interpret.experimentGroup
       sessionsLimit = config.interpret.sessionsLimit
-      emulationSettings = config.interpret.emulationSettings
       completeTokenProbability = config.interpret.completeTokenProbability
       completeTokenSeed = config.interpret.completeTokenSeed
       useReordering = config.reorder.useReordering
@@ -128,24 +120,22 @@ data class Config internal constructor(
       projectPath,
       language,
       outputDir,
+      strategy,
       ActionsGeneration(
-        evaluationRoots,
-        CompletionStrategy(prefixStrategy, contextStrategy, emulateUser, codeGolf, filters)
+        evaluationRoots
       ),
       ActionsInterpretation(
-        completionType,
         experimentGroup,
         sessionsLimit,
         completeTokenProbability,
         completeTokenSeed,
-        emulationSettings,
-        codeGolfSettings,
         saveLogs,
         saveFeatures,
         saveContent,
         logLocationAndItemText,
         trainTestSplit
       ),
+
       ReorderElements(
         useReordering,
         reorderingTitle,

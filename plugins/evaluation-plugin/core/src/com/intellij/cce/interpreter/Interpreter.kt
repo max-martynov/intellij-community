@@ -1,13 +1,13 @@
 package com.intellij.cce.interpreter
 
 import com.intellij.cce.actions.*
-import com.intellij.cce.core.Session
+import com.intellij.cce.core.*
 import com.intellij.cce.util.FileTextUtil.computeChecksum
 import com.intellij.cce.util.FileTextUtil.getDiff
 import java.nio.file.Paths
 import java.util.*
 
-class Interpreter(private val invoker: CompletionInvoker,
+class Interpreter(private val invoker: ActionsInvoker,
                   private val handler: InterpretationHandler,
                   private val filter: InterpretFilter,
                   private val saveContent: Boolean,
@@ -40,16 +40,12 @@ class Interpreter(private val invoker: CompletionInvoker,
           invoker.moveCaret(action.offset)
           position = action.offset
         }
-        is CallCompletion -> {
+        is CallFeature -> {
           isFinished = false
           if (shouldCompleteToken) {
-            val lookup = invoker.callCompletion(action.expectedText, action.prefix)
-            if (session == null) {
-              val sessionUuid = lookup.features?.common?.context?.get(CCE_SESSION_UID_FEATURE_NAME)
-                                ?: UUID.randomUUID().toString()
-              val content = if (saveContent) invoker.getText() else null
-              session = Session(position, action.expectedText, content, action.nodeProperties, sessionUuid)
-            }
+            val lookup = invoker.callFeature(action.expectedText, action.prefix, action.offset)
+            if (session == null)
+              session = createSession(position, action.expectedText, action.nodeProperties, lookup)
             session.addLookup(lookup)
           }
         }
@@ -57,7 +53,7 @@ class Interpreter(private val invoker: CompletionInvoker,
           if (shouldCompleteToken) {
             if (session == null) throw UnexpectedActionException("Session canceled before created")
             val expectedText = session.expectedText
-            isFinished = invoker.finishCompletion(expectedText, session.lookups.last().prefix)
+            isFinished = invoker.finishSession(expectedText, session.lookups.last().prefix)
             session.success = session.lookups.last().suggestions.any { it.text == expectedText }
             sessions.add(session)
             sessionHandler(session)
@@ -66,17 +62,17 @@ class Interpreter(private val invoker: CompletionInvoker,
           session = null
           shouldCompleteToken = filter.shouldCompleteToken()
         }
-        is EmulateUserSession -> {
-          session = invoker.emulateUserSession(action.expectedText, action.nodeProperties, position)
-          if (session.lookups.isNotEmpty()) sessions.add(session)
-          sessionHandler(session)
-          isCanceled = handler.onSessionFinished(fileActions.path)
-        }
-        is CodeGolfSession -> {
-          session = invoker.emulateCodeGolfSession(action.expectedText, position, action.nodeProperties)
-          sessions.add(session)
-          isCanceled = handler.onSessionFinished(filePath)
-        }
+        //is EmulateUserSession -> {
+        //  session = invoker.emulateUserSession(action.expectedText, action.nodeProperties, position)
+        //  if (session.lookups.isNotEmpty()) sessions.add(session)
+        //  sessionHandler(session)
+        //  isCanceled = handler.onSessionFinished(fileActions.path)
+        //}
+        //is CodeGolfSession -> {
+        //  session = invoker.emulateCodeGolfSession(action.expectedText, position, action.nodeProperties)
+        //  sessions.add(session)
+        //  isCanceled = handler.onSessionFinished(filePath)
+        //}
         is PrintText -> {
           if (!action.completable || !isFinished)
             invoker.printText(action.text)
@@ -100,5 +96,12 @@ class Interpreter(private val invoker: CompletionInvoker,
     if (needToClose) invoker.closeFile(filePath)
     handler.onFileProcessed(fileActions.path)
     return sessions
+  }
+
+  private fun createSession(position: Int, expectedText: String, nodeProperties: TokenProperties, lookup: Lookup): Session {
+    val sessionUuid = lookup.features?.common?.context?.get(CCE_SESSION_UID_FEATURE_NAME)
+                      ?: UUID.randomUUID().toString()
+    val content = if (saveContent) invoker.getText() else null
+    return Session(position, expectedText, content, nodeProperties, sessionUuid)
   }
 }

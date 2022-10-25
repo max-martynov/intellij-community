@@ -1,13 +1,17 @@
-package com.intellij.cce.processor
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.cce.evaluable.completion
 
 import com.intellij.cce.actions.*
 import com.intellij.cce.core.CodeFragment
 import com.intellij.cce.core.CodeToken
+import com.intellij.cce.processor.GenerateActionsProcessor
+import com.intellij.cce.processor.TextScopes
 
-class CallCompletionProcessor(private val text: String,
-                              private val strategy: CompletionStrategy,
-                              textStart: Int) : GenerateActionsProcessor() {
-  private var previousTextStart = textStart
+
+class CompletionGenerateActionsProcessor(private val strategy: CompletionStrategy) : GenerateActionsProcessor() {
+
+  var previousTextStart = 0
+  var text = ""
 
   override fun process(code: CodeFragment) {
     if (strategy.context == CompletionContext.ALL) {
@@ -17,6 +21,8 @@ class CallCompletionProcessor(private val text: String,
       return
     }
     previousTextStart = code.offset
+    text = code.text
+
 
     for (token in code.getChildren()) {
       processToken(token)
@@ -50,26 +56,26 @@ class CallCompletionProcessor(private val text: String,
       CompletionContext.PREVIOUS -> preparePreviousContext(token)
     }
 
-    if (strategy.emulateUser) {
-      addAction(EmulateUserSession(token.text, token.properties))
-    } else {
+   // if (strategy.emulateUser) {
+     // addAction(EmulateUserSession(token.text, token.properties))
+    //} else {
       val prefix = prefixCreator.getPrefix(token.text)
       var currentPrefix = ""
       if (prefixCreator.completePrevious) {
         for (symbol in prefix) {
-          addAction(CallCompletion(currentPrefix, token.text, token.properties))
+          addAction(CallFeature(currentPrefix, token.text, token.offset, token.properties))
           addAction(PrintText(symbol.toString(), false))
           currentPrefix += symbol
         }
       }
       else if (prefix.isNotEmpty()) addAction(PrintText(prefix, false))
-      addAction(CallCompletion(prefix, token.text, token.properties))
+      addAction(CallFeature(prefix, token.text, token.offset, token.properties))
       addAction(FinishSession())
 
       if (prefix.isNotEmpty())
         addAction(DeleteRange(token.offset, token.offset + prefix.length, true))
       addAction(PrintText(token.text, true))
-    }
+  //  }
   }
 
   private fun prepareAllContext(token: CodeToken) {
@@ -100,4 +106,5 @@ class CallCompletionProcessor(private val text: String,
   }
 
   private fun checkFilters(token: CodeToken) = strategy.filters.all { it.value.shouldEvaluate(token.properties) }
+
 }

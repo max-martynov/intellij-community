@@ -1,7 +1,7 @@
 package com.intellij.cce.evaluation
 
 import com.intellij.cce.evaluation.step.SetupStatsCollectorStep
-import com.intellij.cce.interpreter.CompletionInvoker
+import com.intellij.cce.interpreter.ActionsInvoker
 import com.intellij.cce.interpreter.InterpretFilter
 import com.intellij.cce.interpreter.InterpretationHandlerImpl
 import com.intellij.cce.interpreter.Interpreter
@@ -22,7 +22,7 @@ import kotlin.system.measureTimeMillis
 class ActionsInterpretationHandler(
   private val config: Config.ActionsInterpretation,
   private val language: String,
-  private val completionInvoker: CompletionInvoker,
+  private val actionsInvoker: ActionsInvoker,
   private val project: Project) : TwoWorkspaceHandler {
   companion object {
     val LOG = Logger.getInstance(ActionsInterpretationHandler::class.java)
@@ -38,7 +38,7 @@ class ActionsInterpretationHandler(
     val filter =
       if (config.completeTokenProbability < 1) RandomInterpretFilter(config.completeTokenProbability, config.completeTokenSeed)
       else InterpretFilter.default()
-    val interpreter = Interpreter(completionInvoker, handler, filter, config.saveContent, project.basePath)
+    val interpreter = Interpreter(actionsInvoker, handler, filter, config.saveContent, project.basePath)
     val featuresStorage = if (config.saveFeatures) workspace2.featuresStorage else FeaturesStorage.EMPTY
     LOG.info("Start interpreting actions")
     if (config.completeTokenProbability < 1) {

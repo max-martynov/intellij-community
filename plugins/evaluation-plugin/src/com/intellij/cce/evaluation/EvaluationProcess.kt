@@ -1,5 +1,6 @@
 package com.intellij.cce.evaluation
 
+import com.intellij.cce.evaluable.EvaluableFeature
 import com.intellij.cce.evaluation.step.FinishEvaluationStep
 import com.intellij.cce.workspace.EvaluationWorkspace
 import com.intellij.openapi.application.ApplicationManager

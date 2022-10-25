@@ -8,7 +8,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 
-class DelegationCompletionInvoker(private val invoker: CompletionInvoker, project: Project) : CompletionInvoker {
+class DelegationActionsInvoker(private val invoker: ActionsInvoker, project: Project) : ActionsInvoker {
   private val applicationListenersRestriction = ListSizeRestriction.applicationListeners()
   private val dumbService = DumbService.getInstance(project)
 
@@ -16,15 +16,18 @@ class DelegationCompletionInvoker(private val invoker: CompletionInvoker, projec
     invoker.moveCaret(offset)
   }
 
-  override fun callCompletion(expectedText: String, prefix: String?): Lookup {
+  override fun callFeature(expectedText: String, prefix: String?, offset: Int): Lookup {
     return readActionWaitingForSize {
-      invoker.callCompletion(expectedText, prefix)
+      invoker.callFeature(expectedText, prefix, offset)
     }
   }
 
-  override fun finishCompletion(expectedText: String, prefix: String) = readAction {
-    invoker.finishCompletion(expectedText, prefix)
+  override fun finishSession(expectedText: String, prefix: String): Boolean {
+    return readActionWaitingForSize {
+      invoker.finishSession(expectedText, prefix)
+    }
   }
+
 
   override fun printText(text: String) = writeAction {
     invoker.printText(text)
@@ -34,17 +37,17 @@ class DelegationCompletionInvoker(private val invoker: CompletionInvoker, projec
     invoker.deleteRange(begin, end)
   }
 
-  override fun emulateUserSession(expectedText: String, nodeProperties: TokenProperties, offset: Int): Session {
-    return readActionWaitingForSize {
-      invoker.emulateUserSession(expectedText, nodeProperties, offset)
-    }
-  }
-
-  override fun emulateCodeGolfSession(expectedLine: String, offset: Int, nodeProperties: TokenProperties): Session {
-    return readActionWaitingForSize {
-      invoker.emulateCodeGolfSession(expectedLine, offset, nodeProperties)
-    }
-  }
+  //override fun emulateUserSession(expectedText: String, nodeProperties: TokenProperties, offset: Int): Session {
+  //  return readActionWaitingForSize {
+  //    invoker.emulateUserSession(expectedText, nodeProperties, offset)
+  //  }
+  //}
+  //
+  //override fun emulateCodeGolfSession(expectedLine: String, offset: Int, nodeProperties: TokenProperties): Session {
+  //  return readActionWaitingForSize {
+  //    invoker.emulateCodeGolfSession(expectedLine, offset, nodeProperties)
+  //  }
+  //}
 
   override fun openFile(file: String): String = readAction {
     invoker.openFile(file)
@@ -89,4 +92,5 @@ class DelegationCompletionInvoker(private val invoker: CompletionInvoker, projec
   private fun onEdt(action: () -> Unit) = ApplicationManager.getApplication().invokeAndWait {
     action()
   }
+
 }
